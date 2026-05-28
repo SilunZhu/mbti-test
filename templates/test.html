@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MBTI Test — {{ question_count }} Questions</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header" style="padding-bottom:20px;">
+            <h1>MBTI Personality Test</h1>
+            <p>{{ question_count }} questions | Choose the option that feels most natural to you</p>
+        </div>
+
+        <div class="progress-wrap">
+            <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+        </div>
+
+        <form id="test-form" method="POST" action="/result">
+            <input type="hidden" name="question_count" value="{{ question_count }}">
+
+            {% for q in questions %}
+            <div class="question-card" id="q-{{ q.id }}">
+                <span class="q-num">Q{{ loop.index }} / {{ question_count }}</span>
+                <div class="q-text">{{ q.text }}</div>
+                <div class="options">
+                    <label class="option" id="opt-a-{{ q.id }}">
+                        <input type="radio" name="q{{ q.id }}" value="a" required>
+                        <span class="letter">A</span>
+                        <span>{{ q.option_a }}</span>
+                    </label>
+                    <label class="option" id="opt-b-{{ q.id }}">
+                        <input type="radio" name="q{{ q.id }}" value="b" required>
+                        <span class="letter">B</span>
+                        <span>{{ q.option_b }}</span>
+                    </label>
+                </div>
+            </div>
+            {% endfor %}
+
+            <div style="text-align:center;padding:12px 0;">
+                <p id="progress-text" style="font-size:13px;color:var(--text-light);margin-bottom:16px;">
+                    Answered: <span id="answered-count">0</span> / {{ question_count }}
+                </p>
+                <button type="submit" class="btn" id="submit-btn" disabled>
+                    Submit & See Results
+                </button>
+            </div>
+        </form>
+
+        <div class="footer">Answer all questions to get the most accurate result.</div>
+    </div>
+
+    <script>
+        const total = {{ question_count }};
+        const form = document.getElementById('test-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const answeredSpan = document.getElementById('answered-count');
+
+        function updateProgress() {
+            const answered = form.querySelectorAll('input[type="radio"]:checked').length;
+            const pct = Math.round(answered / total * 100);
+            progressBar.style.width = pct + '%';
+            answeredSpan.textContent = answered;
+            submitBtn.disabled = answered < total;
+        }
+
+        // Track option selection
+        document.querySelectorAll('.option').forEach(opt => {
+            opt.addEventListener('click', function() {
+                const radio = this.querySelector('input');
+                radio.checked = true;
+
+                // Remove selected from sibling options
+                const parent = this.parentElement;
+                parent.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+
+                updateProgress();
+            });
+        });
+
+        // Scroll into view handling — mark answered questions visually
+        form.addEventListener('change', updateProgress);
+    </script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your MBTI Result — {{ mbti_type }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+
+        <!-- ── Type Header ── -->
+        <div class="result-header">
+            <p style="color:var(--text-light);font-size:14px;margin-bottom:4px;">Your Personality Type</p>
+            <div class="type-display">{{ mbti_type }}</div>
+            <div class="type-subtitle">The {{ personality.title }}</div>
+        </div>
+
+        <!-- ── Dimension Breakdown ── -->
+        <div class="card dim-section">
+            <h2>Dimension Breakdown</h2>
+
+            {% for dim in dimensions %}
+            <div class="dim-item">
+                <div class="dim-label">
+                    <span>{{ dim.description }}</span>
+                    <span>{{ dim.pole_a }} {{ dim.pct_a }}% — {{ dim.pct_b }}% {{ dim.pole_b }}</span>
+                </div>
+                <div class="dim-bar-wrap">
+                    <div class="dim-bar-left{% if dim.pct_a == 0 %} dim-bar-zero{% endif %}" style="width:{{ dim.pct_a }}%">
+                        {% if dim.pct_a >= 15 %}{{ dim.pole_a }} {{ dim.pct_a }}%{% endif %}
+                    </div>
+                    <div class="dim-bar-right{% if dim.pct_b == 0 %} dim-bar-zero{% endif %}" style="width:{{ dim.pct_b }}%">
+                        {% if dim.pct_b >= 15 %}{{ dim.pct_b }}% {{ dim.pole_b }}{% endif %}
+                    </div>
+                </div>
+                <div class="dim-desc">{{ dim.meaning }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- ── Overview ── -->
+        <div class="card eval-section">
+            <h3>Overview</h3>
+            <p>{{ personality.overview }}</p>
+        </div>
+
+        <!-- ── Key Traits ── -->
+        <div class="card eval-section">
+            <h3>Key Traits</h3>
+            <p>{{ personality.traits }}</p>
+        </div>
+
+        <!-- ── Work Style ── -->
+        <div class="card eval-section">
+            <h3>Work Style & Career</h3>
+            <p>{{ personality.work_style }}</p>
+        </div>
+
+        <!-- ── Strengths & Weaknesses ── -->
+        <div class="strength-weakness">
+            <div class="sw-card strengths">
+                <h4>Strengths</h4>
+                <ul>
+                    {% for s in personality.strengths.split(',') %}
+                        {% set s = s.strip().rstrip('.') %}
+                        {% if s %}<li>{{ s }}</li>{% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="sw-card weaknesses">
+                <h4>Areas for Growth</h4>
+                <ul>
+                    {% for w in personality.weaknesses.split(',') %}
+                        {% set w = w.strip().rstrip('.') %}
+                        {% if w %}<li>{{ w }}</li>{% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- ── Actions ── -->
+        <div class="actions">
+            <a href="/" class="btn btn-secondary">Take the Test Again</a>
+            <button class="btn btn-download" onclick="downloadReport()">Download Word Report</button>
+        </div>
+
+        <p class="disclaimer">
+            This report is generated for informational and educational purposes.<br>
+            MBTI is a personality indicator, not a diagnostic tool. Personality is complex
+            and cannot be fully captured by any single assessment.
+        </p>
+
+        <div class="footer">Based on the Myers-Briggs Type Indicator (MBTI) framework.</div>
+    </div>
+
+    <!-- Hidden form for download -->
+    <form id="download-form" method="POST" action="/download" style="display:none;">
+        <input type="hidden" name="mbti_type" value="{{ mbti_type }}">
+        <input type="hidden" name="scores" value='{{ scores_json | safe }}'>
+        <input type="hidden" name="question_count" value="{{ question_count }}">
+    </form>
+
+    <script>
+        function downloadReport() {
+            document.getElementById('download-form').submit();
+        }
+    </script>
+</body>
+</html>

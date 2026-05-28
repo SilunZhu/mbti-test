@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MBTI Personality Test</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🧠</div>
+            <h1>Discover Your Personality Type</h1>
+            <p>Answer a series of questions to discover your MBTI type and gain insight into your personality.</p>
+        </div>
+
+        <div class="card">
+            <h2 style="font-size:18px;margin-bottom:6px;">Choose Your Assessment</h2>
+            <p style="color:var(--text-light);font-size:14px;">Select the number of questions you would like to answer.</p>
+
+            <div class="choice-grid">
+                <label class="choice-card selected" id="card-25">
+                    <input type="radio" name="question_count" value="25" checked>
+                    <span class="num">25</span>
+                    <span class="label">Questions</span>
+                    <span style="font-size:12px;color:var(--text-light);display:block;margin-top:4px;">~5 minutes</span>
+                </label>
+                <label class="choice-card" id="card-50">
+                    <input type="radio" name="question_count" value="50">
+                    <span class="num">50</span>
+                    <span class="label">Questions</span>
+                    <span style="font-size:12px;color:var(--text-light);display:block;margin-top:4px;">~10 minutes</span>
+                </label>
+            </div>
+
+            <div style="text-align:center;">
+                <button class="btn" onclick="startTest()">Start Test</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            Based on the Myers-Briggs Type Indicator (MBTI) framework.
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.choice-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.choice-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                this.querySelector('input').checked = true;
+            });
+        });
+
+        function startTest() {
+            const selected = document.querySelector('input[name="question_count"]:checked');
+            const n = selected ? selected.value : '25';
+            window.location.href = `/test?n=${n}`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MBTI Personality Test</title>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
+<style>
+:root {
+    --primary: #2c5f8a; --primary-light: #e8f0f8; --accent: #3ca4a4;
+    --accent-light: #e6f7f7; --text: #2d3436; --text-light: #636e72;
+    --bg: #f7f9fc; --card-bg: #ffffff; --border: #e0e6ed;
+    --success: #27ae60; --warning: #f39c12;
+    --shadow: 0 2px 12px rgba(0,0,0,0.06); --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
+    --radius: 12px;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); line-height:1.7; min-height:100vh; }
+.container { max-width:780px; margin:0 auto; padding:24px 20px 60px; }
+
+/* Header */
+.header { text-align:center; padding:48px 0 36px; }
+.header .logo { font-size:40px; margin-bottom:8px; }
+.header h1 { font-size:28px; font-weight:700; color:var(--primary); letter-spacing:-0.5px; }
+.header p { color:var(--text-light); font-size:15px; margin-top:4px; }
+
+/* Card */
+.card { background:var(--card-bg); border-radius:var(--radius); box-shadow:var(--shadow); padding:32px; margin-bottom:20px; border:1px solid var(--border); }
+
+/* Landing */
+.choice-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin:28px 0; }
+.choice-card { background:var(--card-bg); border:2px solid var(--border); border-radius:var(--radius); padding:32px 24px; text-align:center; cursor:pointer; transition:all .2s; }
+.choice-card:hover { border-color:var(--accent); background:var(--accent-light); transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+.choice-card.selected { border-color:var(--accent); background:var(--accent-light); box-shadow:0 0 0 3px rgba(60,164,164,0.15); }
+.choice-card .num { font-size:48px; font-weight:800; color:var(--accent); display:block; margin-bottom:4px; }
+.choice-card .label { font-size:14px; color:var(--text-light); }
+
+.btn { display:inline-block; background:var(--primary); color:#fff; border:none; padding:14px 40px; font-size:16px; font-weight:600; border-radius:8px; cursor:pointer; transition:all .2s; text-decoration:none; letter-spacing:.3px; }
+.btn:hover { background:#1e4d73; transform:translateY(-1px); }
+.btn:active { transform:translateY(0); }
+.btn-secondary { background:#fff; color:var(--primary); border:2px solid var(--primary); }
+.btn-secondary:hover { background:var(--primary-light); }
+.btn-download { background:var(--accent); }
+.btn-download:hover { background:#2d8f8f; }
+.btn:disabled { opacity:.5; cursor:not-allowed; }
+
+/* Progress */
+.progress-wrap { background:#fff; border-radius:20px; height:8px; margin-bottom:24px; overflow:hidden; box-shadow:inset 0 1px 3px rgba(0,0,0,0.08); }
+.progress-bar { height:100%; background:linear-gradient(90deg,var(--accent),var(--primary)); transition:width .3s; border-radius:20px; }
+
+/* Questions */
+.q-section { margin-bottom:8px; }
+.question-card { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-bottom:16px; box-shadow:var(--shadow); }
+.q-num { display:inline-block; background:var(--primary-light); color:var(--primary); font-size:12px; font-weight:700; padding:3px 10px; border-radius:12px; margin-bottom:10px; }
+.q-text { font-size:15px; font-weight:500; margin-bottom:14px; line-height:1.6; }
+.options { display:flex; gap:12px; }
+.option { flex:1; display:flex; align-items:flex-start; gap:10px; padding:14px 16px; border:1.5px solid var(--border); border-radius:8px; cursor:pointer; transition:all .2s; font-size:14px; line-height:1.5; }
+.option:hover { border-color:var(--accent); background:var(--accent-light); }
+.option input { display:none; }
+.option.selected { border-color:var(--accent); background:var(--accent-light); box-shadow:0 0 0 2px rgba(60,164,164,0.15); }
+.option .letter { display:flex; align-items:center; justify-content:center; width:28px; height:28px; min-width:28px; border-radius:50%; background:var(--bg); font-weight:700; font-size:13px; color:var(--primary); }
+
+/* Results */
+.result-header { text-align:center; padding:40px 0 32px; }
+.type-display { font-size:72px; font-weight:800; color:var(--primary); letter-spacing:8px; line-height:1; margin-bottom:8px; }
+.type-subtitle { font-size:20px; color:var(--text-light); font-weight:400; font-style:italic; }
+.dim-section h2 { font-size:18px; color:var(--primary); margin-bottom:20px; padding-bottom:10px; border-bottom:2px solid var(--primary-light); }
+.dim-item { margin-bottom:24px; }
+.dim-label { display:flex; justify-content:space-between; font-size:13px; font-weight:600; color:var(--text-light); margin-bottom:6px; }
+.dim-label span:last-child { color:var(--text); }
+.dim-bar-wrap { display:flex; height:28px; border-radius:14px; overflow:hidden; background:#f1f3f5; }
+.dim-bar-left,.dim-bar-right { display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; transition:width .8s; }
+.dim-bar-left { background:var(--primary); border-radius:14px 0 0 14px; }
+.dim-bar-right { background:var(--accent); border-radius:0 14px 14px 0; }
+.dim-desc { font-size:12px; color:var(--text-light); margin-top:4px; font-style:italic; }
+
+.eval-section { margin-bottom:0; }
+.eval-section h3 { font-size:17px; color:var(--primary); margin-bottom:8px; }
+.eval-section p { font-size:14px; line-height:1.8; }
+
+.strength-weakness { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px; }
+.sw-card { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); padding:24px; }
+.sw-card h4 { font-size:15px; margin-bottom:12px; }
+.sw-card.strengths h4 { color:var(--success); }
+.sw-card.weaknesses h4 { color:var(--warning); }
+.sw-card ul { list-style:none; padding:0; }
+.sw-card li { font-size:13px; padding:5px 0; padding-left:16px; position:relative; line-height:1.5; }
+.sw-card li::before { content:"•"; position:absolute; left:0; font-weight:bold; }
+.sw-card.strengths li::before { color:var(--success); }
+.sw-card.weaknesses li::before { color:var(--warning); }
+
+.actions { text-align:center; padding:24px 0; display:flex; justify-content:center; gap:16px; flex-wrap:wrap; }
+.disclaimer { text-align:center; font-size:11px; color:#b2bec3; margin-top:32px; line-height:1.6; }
+.footer { text-align:center; padding:32px 0; color:var(--text-light); font-size:12px; }
+
+/* Navigation */
+.nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+.back-link { color:var(--primary); text-decoration:none; font-size:14px; cursor:pointer; }
+.back-link:hover { text-decoration:underline; }
+
+@media (max-width:640px) {
+    .container { padding:12px 14px 40px; }
+    .header { padding:32px 0 24px; }
+    .header h1 { font-size:22px; }
+    .card { padding:20px; }
+    .choice-grid { grid-template-columns:1fr; }
+    .options { flex-direction:column; }
+    .type-display { font-size:48px; letter-spacing:4px; }
+    .strength-weakness { grid-template-columns:1fr; }
+    .actions { flex-direction:column; align-items:center; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ PAGE: LANDING ═══════════ -->
+<div id="page-landing" class="container">
+    <div class="header">
+        <div class="logo">🧠</div>
+        <h1>Discover Your Personality Type</h1>
+        <p>Answer a series of questions to discover your MBTI type and gain insight into your personality.</p>
+    </div>
+    <div class="card">
+        <h2 style="font-size:18px;margin-bottom:6px;">Choose Your Assessment</h2>
+        <p style="color:var(--text-light);font-size:14px;">Select the number of questions you would like to answer.</p>
+        <div class="choice-grid">
+            <div class="choice-card selected" data-n="25" onclick="selectCount(this)">
+                <span class="num">25</span><span class="label">Questions</span>
+                <span style="font-size:12px;color:var(--text-light);display:block;margin-top:4px;">~5 minutes</span>
+            </div>
+            <div class="choice-card" data-n="50" onclick="selectCount(this)">
+                <span class="num">50</span><span class="label">Questions</span>
+                <span style="font-size:12px;color:var(--text-light);display:block;margin-top:4px;">~10 minutes</span>
+            </div>
+        </div>
+        <div style="text-align:center;">
+            <button class="btn" onclick="startTest()">Start Test</button>
+        </div>
+    </div>
+    <div class="footer">Based on the Myers-Briggs Type Indicator (MBTI) framework.</div>
+</div>
+
+<!-- ═══════════ PAGE: TEST ═══════════ -->
+<div id="page-test" class="container" style="display:none;">
+    <div class="nav">
+        <span class="back-link" onclick="goLanding()">← Back</span>
+        <span id="test-label" style="font-size:14px;color:var(--text-light);">25 Questions</span>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+    <form id="test-form">
+        <div id="questions-container" class="q-section"></div>
+        <div style="text-align:center;padding:12px 0;">
+            <p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">
+                Answered: <span id="answered-count">0</span> / <span id="total-count">25</span>
+            </p>
+            <button type="submit" class="btn" id="submit-btn" disabled>Submit & See Results</button>
+        </div>
+    </form>
+    <div class="footer">Answer all questions to get the most accurate result.</div>
+</div>
+
+<!-- ═══════════ PAGE: RESULT ═══════════ -->
+<div id="page-result" class="container" style="display:none;">
+    <div class="result-header">
+        <p style="color:var(--text-light);font-size:14px;margin-bottom:4px;">Your Personality Type</p>
+        <div class="type-display" id="result-type"></div>
+        <div class="type-subtitle" id="result-title"></div>
+    </div>
+    <div class="card dim-section">
+        <h2>Dimension Breakdown</h2>
+        <div id="dim-bars"></div>
+    </div>
+    <div class="card eval-section" id="result-overview"></div>
+    <div class="card eval-section" id="result-traits"></div>
+    <div class="card eval-section" id="result-work"></div>
+    <div class="strength-weakness" id="result-sw"></div>
+    <div class="actions">
+        <button class="btn btn-secondary" onclick="goLanding()">Take the Test Again</button>
+        <button class="btn btn-download" id="btn-download" onclick="downloadWord()">Download Word Report</button>
+    </div>
+    <p class="disclaimer">This report is generated for informational and educational purposes. MBTI is a personality indicator, not a diagnostic tool. Personality is complex and cannot be fully captured by any single assessment.</p>
+    <div class="footer">Based on the Myers-Briggs Type Indicator (MBTI) framework.</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA: Questions
+// ═══════════════════════════════════════════
+// swap=false → A=pole1 (E/S/T/J), B=pole2 (I/N/F/P)
+// swap=true  → A=pole2 (I/N/F/P), B=pole1 (E/S/T/J)
+const ALL_QUESTIONS = [
+    // EI (13) — 7 swapped, 6 not
+    {id:1,dim:"EI",swap:false,optA:"Go out with friends, social events energize me",optB:"Stay home with a book or movie, solitude restores me",text:"After a long week, how do you prefer to recharge?"},
+    {id:2,dim:"EI",swap:true,optA:"I prefer deeper conversations with a few people",optB:"I enjoy talking to many people and working the room",text:"At a party, you tend to:"},
+    {id:3,dim:"EI",swap:false,optA:"Brainstorming out loud with a team",optB:"Thinking things through independently first",text:"When working on a project, you prefer:"},
+    {id:4,dim:"EI",swap:true,optA:"Reserved and reflective",optB:"Outgoing and talkative",text:"People describe you as:"},
+    {id:5,dim:"EI",swap:false,optA:"Say it immediately, thinking as you speak",optB:"Formulate it fully in my mind before speaking",text:"When you have something to share, you:"},
+    {id:6,dim:"EI",swap:true,optA:"Listen carefully and speak when I have something solid",optB:"Jump in and contribute ideas freely",text:"In a group discussion, you are more likely to:"},
+    {id:7,dim:"EI",swap:false,optA:"Open, bustling, lots of interaction",optB:"Quiet, private, minimal distractions",text:"Your ideal work environment is:"},
+    {id:8,dim:"EI",swap:true,optA:"Cautious and observant at first",optB:"Excited and energized",text:"When meeting new people, you feel:"},
+    {id:9,dim:"EI",swap:false,optA:"Phone calls or face-to-face — faster and more dynamic",optB:"Text or email — gives me time to craft my response",text:"You prefer to communicate via:"},
+    {id:10,dim:"EI",swap:true,optA:"Drained and needing alone time",optB:"Energized and happy",text:"After attending a large social event, you feel:"},
+    {id:11,dim:"EI",swap:true,optA:"Reflect on it alone before discussing",optB:"Talk it through with others to clarify my thoughts",text:"When solving a problem, you tend to:"},
+    {id:12,dim:"EI",swap:false,optA:"Initiate plans and bring people together",optB:"Are selective with social plans and value depth over breadth",text:"Your friends would say you:"},
+    {id:13,dim:"EI",swap:true,optA:"Keep to yourself and observe quietly",optB:"Strike up a conversation with a stranger",text:"In a waiting room or on public transport, you:"},
+    // SN (13) — 6 swapped, 7 not
+    {id:14,dim:"SN",swap:false,optA:"Step-by-step instructions with concrete examples",optB:"Understanding the big picture and underlying theory first",text:"When learning something new, you prefer:"},
+    {id:15,dim:"SN",swap:true,optA:"Gut feelings and new possibilities",optB:"Past experience and proven methods",text:"You trust more:"},
+    {id:16,dim:"SN",swap:false,optA:"I focus on details and practical realities",optB:"I enjoy exploring abstract ideas and patterns",text:"Which describes you better?"},
+    {id:17,dim:"SN",swap:true,optA:"Themes, implications, and the author's vision",optB:"Facts, data, and specific examples",text:"When reading, you pay more attention to:"},
+    {id:18,dim:"SN",swap:false,optA:"Follow an established process that works",optB:"Experiment and find a new, possibly better way",text:"Given a new task, you prefer to:"},
+    {id:19,dim:"SN",swap:true,optA:"What could be, future possibilities and innovations",optB:"What is happening right now, the tangible reality",text:"You are more interested in:"},
+    {id:20,dim:"SN",swap:false,optA:"Practical, down-to-earth topics",optB:"Theoretical, imaginative discussions",text:"In a conversation, you find yourself drawn to:"},
+    {id:21,dim:"SN",swap:true,optA:"Patterns, connections, and intuitive leaps",optB:"Concrete data and observable facts",text:"When making a decision, you rely more on:"},
+    {id:22,dim:"SN",swap:false,optA:"Realistic and grounded",optB:"Visionary and idea-driven",text:"You would describe yourself as:"},
+    {id:23,dim:"SN",swap:false,optA:"Breaking it down into manageable, concrete steps",optB:"Looking for the underlying principle that connects everything",text:"When tackling a complex problem, you start with:"},
+    {id:24,dim:"SN",swap:true,optA:"Brainstorming innovative approaches and new projects",optB:"Executing tasks with precision and consistency",text:"At work, you are more energized by:"},
+    {id:25,dim:"SN",swap:false,optA:"Cooking, woodworking, or gardening — hands-on and sensory",optB:"Writing, painting, or learning philosophy — creative and abstract",text:"Which hobby appeals to you more?"},
+    {id:26,dim:"SN",swap:true,optA:"Get to the point and share the meaning behind it",optB:"Give a clear, chronological account with all the details",text:"When someone tells a story, you want them to:"},
+    // TF (12) — 6 swapped, 6 not
+    {id:27,dim:"TF",swap:false,optA:"Logic, fairness, and objective analysis",optB:"Impact on people, harmony, and personal values",text:"When making an important decision, you prioritize:"},
+    {id:28,dim:"TF",swap:true,optA:"Acknowledge their feelings and try to find a compromise",optB:"Explain the rationale and data behind the decision",text:"A colleague is upset about a decision. You tend to:"},
+    {id:29,dim:"TF",swap:false,optA:"A well-reasoned, logically flawless argument",optB:"A deeply empathetic and compassionate act",text:"You are more impressed by:"},
+    {id:30,dim:"TF",swap:true,optA:"Understanding the values and motivations behind each position",optB:"Spotting inconsistencies and flaws in the logic",text:"In a debate, you focus on:"},
+    {id:31,dim:"TF",swap:false,optA:"Direct and critical — honesty helps people improve",optB:"Encouraging and supportive — I avoid hurting feelings",text:"When giving feedback, you tend to be:"},
+    {id:32,dim:"TF",swap:true,optA:"Individual circumstances and context are taken into account",optB:"Rules are applied consistently and impartially",text:"You believe justice is best served when:"},
+    {id:33,dim:"TF",swap:false,optA:"Analytical and objective",optB:"Warm and compassionate",text:"People would describe you as:"},
+    {id:34,dim:"TF",swap:true,optA:"Listen and provide emotional support",optB:"Offer practical solutions and a plan of action",text:"When a friend is going through a tough time, you first:"},
+    {id:35,dim:"TF",swap:false,optA:"Getting the job done efficiently and correctly",optB:"Maintaining positive team dynamics and morale",text:"At work, you are more concerned with:"},
+    {id:36,dim:"TF",swap:true,optA:'"You hurt someone\'s feelings"',optB:'"Your reasoning doesn\'t hold up"',text:"Which criticism would bother you more?"},
+    {id:37,dim:"TF",swap:false,optA:"Makes tough, data-driven decisions even when unpopular",optB:"Builds consensus and cares deeply about the team's well-being",text:"You respect a leader who:"},
+    {id:38,dim:"TF",swap:true,optA:"How it makes you feel, aesthetics, and personal fit",optB:"Specifications, performance data, and cost-benefit analysis",text:"When evaluating a purchase, you look at:"},
+    // JP (12) — 6 swapped, 6 not
+    {id:39,dim:"JP",swap:true,optA:"I prefer to stay flexible and see where the day takes me",optB:"I like having a clear schedule and sticking to it",text:"How do you approach your daily life?"},
+    {id:40,dim:"JP",swap:false,optA:"Plan ahead and finish early to avoid last-minute stress",optB:"Work best under pressure, often pulling things together at the end",text:"When working on a deadline, you:"},
+    {id:41,dim:"JP",swap:true,optA:"Options are kept open and plans can change",optB:"Decisions are made and things are settled",text:"You feel more comfortable when:"},
+    {id:42,dim:"JP",swap:false,optA:"Organized and tidy, everything in its place",optB:"A bit chaotic but I know where everything is",text:"Your desk or workspace is usually:"},
+    {id:43,dim:"JP",swap:true,optA:"Dive in and figure it out as you go",optB:"Break it into steps with milestones and a timeline",text:"When starting a big project, you:"},
+    {id:44,dim:"JP",swap:false,optA:"They give me structure and productivity",optB:"They feel restrictive — I prefer variety and spontaneity",text:"How do you feel about routines?"},
+    {id:45,dim:"JP",swap:true,optA:"Get distracted by something interesting and change course",optB:"Check it off and move to the next planned item",text:"When you finish one task, you typically:"},
+    {id:46,dim:"JP",swap:false,optA:"Expectations, roles, and deadlines are clearly defined",optB:"There is flexibility to explore and adapt as needed",text:"You prefer a work environment where:"},
+    {id:47,dim:"JP",swap:true,optA:"Limiting — I like to keep my options open as long as possible",optB:"Satisfying — closure is important to me",text:"Making a decision feels:"},
+    {id:48,dim:"JP",swap:false,optA:"Feel frustrated and try to get back on track",optB:"Adapt easily and see it as an opportunity",text:"When plans change unexpectedly, you:"},
+    {id:49,dim:"JP",swap:true,optA:"Keep a mental list and do things as they feel right",optB:"Make a to-do list and methodically work through it",text:"You are more likely to:"},
+    {id:50,dim:"JP",swap:false,optA:"Plan, prepare, and execute with discipline",optB:"Explore, adapt, and go with the flow",text:"Which describes your approach to life better?"},
+];
+
+// ═══════════════════════════════════════════
+// DATA: Personality DB
+// ═══════════════════════════════════════════
+const PERSONALITY = {
+INTJ:{title:"The Architect",overview:"Strategic, analytical, and independent. INTJs are natural planners who see the world as a complex system to be understood and improved. They are driven by an inner vision and have a remarkable ability to focus deeply on their goals.",traits:"Rational, decisive, visionary, and highly self-disciplined. INTJs trust logic over emotion and prefer to work independently on long-term projects. They value competence and intelligence in themselves and others.",work:"Systematic and strategic. INTJs excel at creating long-term plans and executing them with precision. They prefer autonomy, dislike micromanagement, and thrive in environments that reward intellectual rigor.",strengths:"Exceptional strategic thinking, strong analytical ability, unwavering determination, independent and self-motivated, able to see the big picture while managing details",weaknesses:"May come across as aloof or dismissive of emotions, can be overly critical, struggles with social small talk, may overlook others' need for emotional validation"},
+INTP:{title:"The Logician",overview:"Innovative, curious, and deeply analytical. INTPs are driven by an insatiable desire to understand how things work. They are natural philosophers and inventors who love exploring abstract concepts.",traits:"Logical, original, open-minded, and intellectually playful. INTPs enjoy deconstructing ideas and reconstructing them in novel ways. They value truth and precision above all else.",work:"Flexible and idea-driven. INTPs work best when given intellectual freedom and minimal structure. They excel at solving complex theoretical problems but may struggle with routine tasks.",strengths:"Brilliant problem-solving ability, creative and original thinking, objective and fair-minded, deep curiosity, excellent at pattern recognition",weaknesses:"Can overthink and get lost in analysis, may neglect practical details, struggles with deadlines and structure, can be socially withdrawn"},
+ENTJ:{title:"The Commander",overview:"Bold, charismatic, and decisive. ENTJs are natural-born leaders who thrive on challenge and achievement. They have a clear vision of the future and the drive to make it happen.",traits:"Confident, strategic, and highly driven. ENTJs are assertive communicators who inspire others to action. They value efficiency, competence, and measurable results.",work:"Goal-oriented and structured. ENTJs take charge, set ambitious targets, and mobilize teams to achieve them. They prefer fast-paced, competitive environments.",strengths:"Strong leadership and organizational skills, decisive and action-oriented, excellent strategic planner, inspiring communicator, resilient under pressure",weaknesses:"Can be domineering or impatient, may overlook emotions, tends to be overly critical of underperformance, may struggle with work-life balance"},
+ENTP:{title:"The Debater",overview:"Witty, curious, and endlessly creative. ENTPs are idea machines who thrive on intellectual challenge and lively debate. They see possibilities everywhere.",traits:"Quick-thinking, charismatic, and adaptable. ENTPs enjoy challenging conventions and exploring new perspectives. They are energetic brainstormers who love starting new projects.",work:"Flexible and entrepreneurial. ENTPs work best in dynamic, stimulating environments. They excel at generating ideas and solving novel problems but may lose interest in execution.",strengths:"Exceptional creativity, quick learner, excellent debater and communicator, adaptable and resourceful, sees opportunities others miss",weaknesses:"Can be argumentative for its own sake, struggles with follow-through, easily bored with routine, may neglect practical constraints"},
+INFJ:{title:"The Advocate",overview:"Insightful, idealistic, and deeply compassionate. INFJs combine vision with empathy, driven by a desire to help others and make the world a better place.",traits:"Intuitive, principled, and quietly determined. INFJs have a deep understanding of people and complex emotional dynamics. They are selective but intensely loyal.",work:"Purpose-driven and organized. INFJs need meaningful work aligned with their values. They prefer calm, harmonious environments and excel at understanding people's needs.",strengths:"Deep empathy and insight into people, strong values and integrity, creative and visionary, persistent when committed, excellent written communicator",weaknesses:"Prone to burnout from caring too much, can be overly sensitive to criticism, struggles with tough confrontations, may set unrealistic standards"},
+INFP:{title:"The Mediator",overview:"Idealistic, creative, and deeply value-driven. INFPs see the potential for beauty and goodness in everything. They are guided by a strong inner moral compass.",traits:"Compassionate, imaginative, and authentic. INFPs seek meaning and purpose in all they do. They are gentle souls with a fierce commitment to their principles.",work:"Flexible and inspiration-driven. INFPs need creative freedom and work that aligns with their values. They excel at writing, counseling, and creative pursuits.",strengths:"Strong empathy and emotional intelligence, deep creativity and imagination, unwavering integrity, open-minded, excellent listener",weaknesses:"Can be overly idealistic, takes criticism personally, struggles with practical or mundane tasks, may avoid conflict to a fault"},
+ENFJ:{title:"The Protagonist",overview:"Charismatic, inspiring, and deeply caring. ENFJs are natural mentors who see the best in others and help them grow. They lead with warmth and vision.",traits:"Empathetic, persuasive, and highly socially aware. ENFJs are skilled communicators who bring people together. They are driven by a desire to make a positive impact.",work:"Collaborative and organized. ENFJs thrive in people-oriented roles and excel at building teams. They are natural motivators who create harmony and shared purpose.",strengths:"Exceptional people skills, natural leader and motivator, strong communication ability, reliable and conscientious, sees potential in others",weaknesses:"May neglect their own needs for others, can be overly involved or intrusive, struggles with criticism, may make decisions too quickly on behalf of others"},
+ENFP:{title:"The Campaigner",overview:"Enthusiastic, creative, and endlessly curious about people. ENFPs are free spirits who see life as a kaleidoscope of possibilities and connections.",traits:"Warm, imaginative, and spontaneous. ENFPs are energetic explorers of ideas and relationships. They are infectious optimists who inspire others with their passion.",work:"Flexible and people-centered. ENFPs need variety, creativity, and human interaction. They excel at brainstorming, networking, and starting new initiatives.",strengths:"Outstanding people skills and empathy, boundless creativity and curiosity, infectious enthusiasm, adaptable, excellent communicator",weaknesses:"Easily distracted by new ideas, struggles with routine and discipline, can overcommit, may be overly sensitive, prone to procrastination"},
+ISTJ:{title:"The Logistician",overview:"Practical, reliable, and thoroughly grounded. ISTJs are the backbone of organizations — steady, methodical, and unwavering in their commitment to duty.",traits:"Dependable, detail-oriented, and disciplined. ISTJs value tradition, order, and proven methods. They keep their word and expect the same from others.",work:"Structured and systematic. ISTJs excel at creating and following processes. They value clear expectations and take pride in completing tasks thoroughly and on time.",strengths:"Exceptional reliability and integrity, strong organizational skills, practical and realistic, patient and persistent, thorough and detail-oriented",weaknesses:"May resist change or new approaches, can be inflexible, may seem overly rigid or judgmental, struggles with abstract or ambiguous situations"},
+ISFJ:{title:"The Defender",overview:"Warm, dedicated, and quietly supportive. ISFJs are the unsung heroes who protect traditions, care for loved ones, and work tirelessly behind the scenes.",traits:"Kind, conscientious, and deeply loyal. ISFJs have a rich inner world and a strong desire to serve and protect. They notice what others need and quietly provide it.",work:"Methodical and service-oriented. ISFJs excel at supportive roles requiring attention to detail and human care. They prefer stable, cooperative environments.",strengths:"Deeply caring and supportive, highly reliable and thorough, strong practical skills, patient and loyal, excellent memory for details about people",weaknesses:"May suppress their own needs, can be overly self-critical, hesitant to embrace change, may avoid conflict or assertiveness"},
+ESTJ:{title:"The Executive",overview:"Efficient, decisive, and results-driven. ESTJs are natural administrators who bring order, structure, and accountability wherever they go.",traits:"Practical, assertive, and highly organized. ESTJs value hard work, tradition, and clear hierarchies. They lead by example and expect excellence.",work:"Structured and goal-oriented. ESTJs excel at managing people and processes. They create order from chaos and ensure things get done correctly and on time.",strengths:"Strong leadership and management skills, dependable and dedicated, clear and direct communicator, excellent at organizing people and resources, unwavering work ethic",weaknesses:"Can be inflexible and authoritarian, may overlook feelings, struggles with unconventional ideas, can be overly focused on rules"},
+ESFJ:{title:"The Consul",overview:"Warm, sociable, and conscientious. ESFJs are the caregivers of the community — attentive, generous, and deeply committed to the well-being of those around them.",traits:"Friendly, practical, and highly attuned to others' needs. ESFJs thrive on social harmony and take genuine pleasure in helping people. They are loyal to tradition and community.",work:"Cooperative and structured. ESFJs excel in people-facing roles where they can organize and support. They prefer harmonious, well-defined environments.",strengths:"Excellent interpersonal skills, highly organized and reliable, genuine care for others, strong sense of duty, creates warm, inclusive environments",weaknesses:"May seek external validation too much, can be overly sensitive, struggles with criticism, may be reluctant to innovate or change"},
+ISTP:{title:"The Virtuoso",overview:"Bold, hands-on, and naturally skilled. ISTPs are masters of tools and technology — quiet explorers who understand how things work through direct experience.",traits:"Practical, adaptable, and fiercely independent. ISTPs are calm in crises and excel at troubleshooting. They value freedom, action, and tangible results.",work:"Flexible and action-oriented. ISTPs work best with hands-on tasks and real-time problem solving. They dislike bureaucracy and prefer learning by doing.",strengths:"Exceptional hands-on problem solving, calm under pressure, adaptable and resourceful, independent and self-sufficient, keen observational skills",weaknesses:"May seem detached or insensitive, can be risk-prone or impulsive, struggles with long-term planning, may avoid emotional expression"},
+ISFP:{title:"The Adventurer",overview:"Gentle, artistic, and deeply in tune with the present moment. ISFPs are quiet explorers of beauty and experience who express themselves through action and art.",traits:"Sensitive, creative, and open-minded. ISFPs live by their own values and seek authentic experiences. They are warm but private, competitive but kind.",work:"Flexible and hands-on. ISFPs need creative freedom and tangible results. They excel at artistic, aesthetic, and service-oriented work done on their own terms.",strengths:"Strong aesthetic sense and creativity, deeply empathetic, adaptable and open-minded, lives with authenticity, excellent at appreciating the present moment",weaknesses:"May be overly sensitive or private, struggles with long-term planning, can be difficult to get to know, may avoid conflict and tough decisions"},
+ESTP:{title:"The Entrepreneur",overview:"Energetic, action-oriented, and thrillingly direct. ESTPs are risk-takers who live in the moment and seize opportunities with both hands.",traits:"Bold, practical, and sociable. ESTPs are natural negotiators who read situations and people quickly. They love excitement, variety, and tangible results.",work:"Dynamic and results-oriented. ESTPs thrive in fast-paced, high-stakes environments. They excel at sales, negotiation, and crisis management.",strengths:"Quick decision-making under pressure, bold and action-oriented, excellent people skills and charisma, highly adaptable, sees and seizes opportunities",weaknesses:"Can be impulsive and risk-prone, may overlook long-term consequences, struggles with abstract theory, may seem insensitive or blunt"},
+ESFP:{title:"The Entertainer",overview:"Lively, spontaneous, and irresistibly charming. ESFPs are the life of any gathering — warm, generous, and deeply attuned to the joy of the present moment.",traits:"Playful, sociable, and practical. ESFPs love people, new experiences, and making everyday life more fun. They are natural performers who brighten any room.",work:"People-centered and hands-on. ESFPs excel at roles involving direct interaction, variety, and immediate impact. They bring energy and enthusiasm to teams.",strengths:"Exceptional social skills and warmth, bold and optimistic, highly observant of people, adaptable and resourceful, brings energy and fun to groups",weaknesses:"Easily bored with routine, may avoid planning and long-term commitments, can be impulsive with resources, seeks attention and validation"},
+};
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let questionCount = 25;
+let questions = [];
+
+// ═══════════════════════════════════════════
+// PAGE NAVIGATION
+// ═══════════════════════════════════════════
+function showPage(id) {
+    ['page-landing','page-test','page-result'].forEach(p => {
+        document.getElementById(p).style.display = (p === id) ? '' : 'none';
+    });
+    window.scrollTo(0,0);
+}
+
+function selectCount(el) {
+    document.querySelectorAll('.choice-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    questionCount = parseInt(el.dataset.n);
+}
+
+function startTest() {
+    questions = getQuestions(questionCount);
+    document.getElementById('test-label').textContent = questionCount + ' Questions';
+    document.getElementById('total-count').textContent = questionCount;
+    renderQuestions();
+    showPage('page-test');
+    updateProgress();
+}
+
+function goLanding() {
+    showPage('page-landing');
+}
+
+// ═══════════════════════════════════════════
+// QUESTION ENGINE
+// ═══════════════════════════════════════════
+function getQuestions(count) {
+    if (count >= 50) return [...ALL_QUESTIONS];
+    const perDim = Math.floor(count / 4);
+    let extra = count % 4;
+    const dims = ["EI","SN","TF","JP"];
+    const groups = {};
+    dims.forEach(d => groups[d] = ALL_QUESTIONS.filter(q => q.dim === d));
+    let sel = [];
+    dims.forEach(d => sel.push(...groups[d].slice(0, perDim)));
+    for (let i = 0; i < extra; i++) sel.push(groups[dims[i]][perDim]);
+    sel.sort((a,b) => a.id - b.id);
+    return sel;
+}
+
+function renderQuestions() {
+    const container = document.getElementById('questions-container');
+    container.innerHTML = questions.map((q, i) => `
+        <div class="question-card" id="q-${q.id}">
+            <span class="q-num">Q${i+1} / ${questionCount}</span>
+            <div class="q-text">${q.text}</div>
+            <div class="options">
+                <label class="option" id="opt-a-${q.id}" onclick="selectOption(${q.id},'a',this)">
+                    <input type="radio" name="q${q.id}" value="a" required>
+                    <span class="letter">A</span>
+                    <span>${q.optA}</span>
+                </label>
+                <label class="option" id="opt-b-${q.id}" onclick="selectOption(${q.id},'b',this)">
+                    <input type="radio" name="q${q.id}" value="b" required>
+                    <span class="letter">B</span>
+                    <span>${q.optB}</span>
+                </label>
+            </div>
+        </div>
+    `).join('');
+}
+
+function selectOption(qid, val, el) {
+    const card = document.getElementById('q-' + qid);
+    card.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    const radio = el.querySelector('input');
+    radio.checked = true;
+    updateProgress();
+}
+
+function updateProgress() {
+    const answered = document.querySelectorAll('#test-form input[type="radio"]:checked').length;
+    document.getElementById('progress-bar').style.width = Math.round(answered / questionCount * 100) + '%';
+    document.getElementById('answered-count').textContent = answered;
+    document.getElementById('submit-btn').disabled = answered < questionCount;
+}
+
+// ═══════════════════════════════════════════
+// SCORING ENGINE
+// ═══════════════════════════════════════════
+function scoreAnswers() {
+    const answers = {};
+    questions.forEach(q => {
+        const radio = document.querySelector('input[name="q' + q.id + '"]:checked');
+        if (radio) answers[q.id] = {val: radio.value, swap: q.swap};
+    });
+    // Count toward pole1 (E,S,T,J) and pole2 (I,N,F,P)
+    const dims = {EI:{p1:0,p2:0}, SN:{p1:0,p2:0}, TF:{p1:0,p2:0}, JP:{p1:0,p2:0}};
+    questions.forEach(q => {
+        const a = answers[q.id];
+        if (!a) return;
+        // If not swapped: a→p1, b→p2. If swapped: a→p2, b→p1
+        const isP1 = (a.val === 'a' && !a.swap) || (a.val === 'b' && a.swap);
+        if (isP1) dims[q.dim].p1++;
+        else dims[q.dim].p2++;
+    });
+    const poles = {EI:['E','I'], SN:['S','N'], TF:['T','F'], JP:['J','P']};
+    const scores = {};
+    for (const [dim, d] of Object.entries(dims)) {
+        const total = d.p1 + d.p2;
+        const pctP1 = total ? Math.round(d.p1 / total * 100) : 50;
+        scores[dim] = {[poles[dim][0]]: pctP1, [poles[dim][1]]: 100 - pctP1};
+    }
+    return scores;
+}
+
+function determineType(scores) {
+    const map = [['EI','E','I'],['SN','S','N'],['TF','T','F'],['JP','J','P']];
+    let type = '';
+    map.forEach(([dim, a, b]) => type += scores[dim][a] >= scores[dim][b] ? a : b);
+    return type;
+}
+
+// ═══════════════════════════════════════════
+// SUBMIT & DISPLAY RESULTS
+// ═══════════════════════════════════════════
+document.getElementById('test-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const scores = scoreAnswers();
+    const mbtiType = determineType(scores);
+    const p = PERSONALITY[mbtiType];
+    if (!p) return;
+
+    // Header
+    document.getElementById('result-type').textContent = mbtiType;
+    document.getElementById('result-title').textContent = 'The ' + p.title;
+
+    // Dimension bars
+    const dimDescs = {
+        EI: "Extraversion vs Introversion", SN: "Sensing vs Intuition",
+        TF: "Thinking vs Feeling", JP: "Judging vs Perceiving"
+    };
+    const dimMeanings = {
+        EI: "Where you focus your attention and get energy",
+        SN: "How you take in information and perceive the world",
+        TF: "How you make decisions and evaluate information",
+        JP: "How you approach structure and the outer world"
+    };
+    const dimOrder = [['EI','E','I'],['SN','S','N'],['TF','T','F'],['JP','J','P']];
+    let barsHTML = '';
+    dimOrder.forEach(([dim, a, b]) => {
+        const pctA = scores[dim][a], pctB = scores[dim][b];
+        barsHTML += `
+        <div class="dim-item">
+            <div class="dim-label"><span>${dimDescs[dim]}</span><span>${a} ${pctA}% — ${pctB}% ${b}</span></div>
+            <div class="dim-bar-wrap">
+                <div class="dim-bar-left" style="width:${pctA}%;${pctA===0?'border-radius:0':''}">${pctA>=15?a+' '+pctA+'%':''}</div>
+                <div class="dim-bar-right" style="width:${pctB}%;${pctB===0?'border-radius:0':''}">${pctB>=15?pctB+'% '+b:''}</div>
+            </div>
+            <div class="dim-desc">${dimMeanings[dim]}</div>
+        </div>`;
+    });
+    document.getElementById('dim-bars').innerHTML = barsHTML;
+
+    // Evaluation sections
+    document.getElementById('result-overview').innerHTML = '<h3>Overview</h3><p>' + p.overview + '</p>';
+    document.getElementById('result-traits').innerHTML = '<h3>Key Traits</h3><p>' + p.traits + '</p>';
+    document.getElementById('result-work').innerHTML = '<h3>Work Style & Career</h3><p>' + p.work + '</p>';
+
+    // Strengths & Weaknesses
+    function buildList(str) {
+        return str.split(',').map(s => { s = s.trim(); return s ? '<li>' + s.replace(/\.$/,'') + '</li>' : ''; }).join('');
+    }
+    document.getElementById('result-sw').innerHTML = `
+        <div class="sw-card strengths"><h4>Strengths</h4><ul>${buildList(p.strengths)}</ul></div>
+        <div class="sw-card weaknesses"><h4>Areas for Growth</h4><ul>${buildList(p.weaknesses)}</ul></div>`;
+
+    showPage('page-result');
+
+    // Store data for Word download
+    document.getElementById('page-result').dataset.mbtiType = mbtiType;
+    document.getElementById('page-result').dataset.scores = JSON.stringify(scores);
+});
+
+// ═══════════════════════════════════════════
+// WORD DOWNLOAD (pure client-side using docx library)
+// ═══════════════════════════════════════════
+async function downloadWord() {
+    const mbtiType = document.getElementById('page-result').dataset.mbtiType;
+    const scores = JSON.parse(document.getElementById('page-result').dataset.scores);
+    const p = PERSONALITY[mbtiType];
+    const btn = document.getElementById('btn-download');
+    btn.textContent = 'Generating...';
+    btn.disabled = true;
+
+    try {
+        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+                HeadingLevel, AlignmentType, WidthType, BorderStyle } = docx;
+
+        const dimLabels = {EI:['E','I','Extraversion vs Introversion','Where you focus your attention and get energy'],
+                           SN:['S','N','Sensing vs Intuition','How you take in information and perceive the world'],
+                           TF:['T','F','Thinking vs Feeling','How you make decisions and evaluate information'],
+                           JP:['J','P','Judging vs Perceiving','How you approach structure and the outer world']};
+
+        const children = [];
+
+        // Title
+        children.push(new Paragraph({ spacing: { after: 400 },
+            children: [new TextRun({ text: 'MBTI Personality Report', bold: true, size: 44, color: '003366' })],
+            alignment: AlignmentType.CENTER }));
+        children.push(new Paragraph({ spacing: { after: 400 },
+            children: [new TextRun({ text: 'Myers-Briggs Type Indicator — Personal Assessment', size: 24, color: '888888', italics: true })],
+            alignment: AlignmentType.CENTER }));
+
+        // Type result
+        children.push(new Paragraph({ heading: HeadingLevel.HEADING_1, spacing: { after: 200 },
+            children: [new TextRun({ text: 'Your Personality Type' })] }));
+        children.push(new Paragraph({ spacing: { after: 100 }, alignment: AlignmentType.CENTER,
+            children: [new TextRun({ text: mbtiType, bold: true, size: 56, color: '003366' })] }));
+        children.push(new Paragraph({ spacing: { after: 400 }, alignment: AlignmentType.CENTER,
+            children: [new TextRun({ text: 'The ' + p.title, italics: true, size: 28, color: '888888' })] }));
+
+        // Dimension Breakdown
+        children.push(new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 300, after: 200 },
+            children: [new TextRun({ text: 'Dimension Breakdown' })] }));
+
+        for (const [dim, labels] of Object.entries(dimLabels)) {
+            const [poleA, poleB, desc, meaning] = labels;
+            const pctA = scores[dim][poleA], pctB = scores[dim][poleB];
+            const barA = '█'.repeat(Math.round(pctA / 4));
+            const barB = '█'.repeat(Math.round(pctB / 4));
+
+            children.push(new Paragraph({ spacing: { before: 200 },
+                children: [new TextRun({ text: desc, bold: true, size: 22 })] }));
+            children.push(new Paragraph({
+                children: [new TextRun({ text: poleA + ': ' + barA + ' ' + pctA + '%    ' + poleB + ': ' + barB + ' ' + pctB + '%', size: 20 })] }));
+            children.push(new Paragraph({ spacing: { after: 100 },
+                children: [new TextRun({ text: meaning, italics: true, size: 18, color: '888888' })] }));
+        }
+
+        // Divider
+        children.push(new Paragraph({ spacing: { before: 300, after: 300 },
+            children: [new TextRun({ text: '─'.repeat(60), color: 'cccccc' })] }));
+
+        // Evaluation
+        children.push(new Paragraph({ heading: HeadingLevel.HEADING_1, spacing: { after: 200 },
+            children: [new TextRun({ text: 'Personality Evaluation' })] }));
+
+        for (const [title, content] of [['Overview', p.overview], ['Key Traits', p.traits], ['Work Style & Career', p.work]]) {
+            children.push(new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { after: 100 },
+                children: [new TextRun({ text: title })] }));
+            children.push(new Paragraph({ spacing: { after: 200 },
+                children: [new TextRun({ text: content, size: 22 })] }));
+        }
+
+        // Strengths
+        children.push(new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { after: 100 },
+            children: [new TextRun({ text: 'Strengths' })] }));
+        p.strengths.split(',').forEach(s => {
+            s = s.trim().replace(/\.$/, '');
+            if (s) children.push(new Paragraph({ spacing: { after: 60 }, bullet: { level: 0 },
+                children: [new TextRun({ text: s, size: 21 })] }));
+        });
+
+        // Weaknesses
+        children.push(new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { after: 100, before: 200 },
+            children: [new TextRun({ text: 'Areas for Growth' })] }));
+        p.weaknesses.split(',').forEach(s => {
+            s = s.trim().replace(/\.$/, '');
+            if (s) children.push(new Paragraph({ spacing: { after: 60 }, bullet: { level: 0 },
+                children: [new TextRun({ text: s, size: 21 })] }));
+        });
+
+        // Footer
+        children.push(new Paragraph({ spacing: { before: 500 },
+            children: [new TextRun({ text: 'This report is generated for informational and educational purposes. MBTI is a personality indicator, not a diagnostic tool. Personality is complex and cannot be fully captured by any single assessment.', size: 16, color: 'aaaaaa', italics: true })] }));
+
+        const doc = new Document({ sections: [{ children }] });
+        const blob = await Packer.toBlob(doc);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'MBTI_Report_' + mbtiType + '.docx';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        btn.textContent = 'Download Word Report';
+        btn.disabled = false;
+    } catch (e) {
+        console.error(e);
+        btn.textContent = 'Download failed — retry';
+        btn.disabled = false;
+    }
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+showPage('page-landing');
+</script>
+</body>
+</html>
