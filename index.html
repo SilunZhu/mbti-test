@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MBTI Personality Test</title>
-<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
 <style>
 :root {
     --primary: #2c5f8a; --primary-light: #e8f0f8; --accent: #3ca4a4;
@@ -18,22 +18,25 @@
 body { font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); line-height:1.7; min-height:100vh; }
 .container { max-width:780px; margin:0 auto; padding:24px 20px 60px; }
 
-/* Header */
 .header { text-align:center; padding:48px 0 36px; }
 .header .logo { font-size:40px; margin-bottom:8px; }
 .header h1 { font-size:28px; font-weight:700; color:var(--primary); letter-spacing:-0.5px; }
 .header p { color:var(--text-light); font-size:15px; margin-top:4px; }
 
-/* Card */
 .card { background:var(--card-bg); border-radius:var(--radius); box-shadow:var(--shadow); padding:32px; margin-bottom:20px; border:1px solid var(--border); }
 
-/* Landing */
 .choice-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin:28px 0; }
 .choice-card { background:var(--card-bg); border:2px solid var(--border); border-radius:var(--radius); padding:32px 24px; text-align:center; cursor:pointer; transition:all .2s; }
 .choice-card:hover { border-color:var(--accent); background:var(--accent-light); transform:translateY(-2px); box-shadow:var(--shadow-lg); }
 .choice-card.selected { border-color:var(--accent); background:var(--accent-light); box-shadow:0 0 0 3px rgba(60,164,164,0.15); }
 .choice-card .num { font-size:48px; font-weight:800; color:var(--accent); display:block; margin-bottom:4px; }
 .choice-card .label { font-size:14px; color:var(--text-light); }
+
+/* Language selector */
+.lang-select { display:flex; justify-content:center; gap:12px; margin:20px 0; }
+.lang-select button { padding:10px 28px; border:2px solid var(--border); border-radius:8px; background:#fff; cursor:pointer; font-size:15px; font-weight:600; transition:all .2s; }
+.lang-select button.active { border-color:var(--accent); background:var(--accent-light); color:var(--accent); }
+.lang-select button:hover { border-color:var(--accent); }
 
 .btn { display:inline-block; background:var(--primary); color:#fff; border:none; padding:14px 40px; font-size:16px; font-weight:600; border-radius:8px; cursor:pointer; transition:all .2s; text-decoration:none; letter-spacing:.3px; }
 .btn:hover { background:#1e4d73; transform:translateY(-1px); }
@@ -44,12 +47,9 @@ body { font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; backgr
 .btn-download:hover { background:#2d8f8f; }
 .btn:disabled { opacity:.5; cursor:not-allowed; }
 
-/* Progress */
 .progress-wrap { background:#fff; border-radius:20px; height:8px; margin-bottom:24px; overflow:hidden; box-shadow:inset 0 1px 3px rgba(0,0,0,0.08); }
 .progress-bar { height:100%; background:linear-gradient(90deg,var(--accent),var(--primary)); transition:width .3s; border-radius:20px; }
 
-/* Questions */
-.q-section { margin-bottom:8px; }
 .question-card { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-bottom:16px; box-shadow:var(--shadow); }
 .q-num { display:inline-block; background:var(--primary-light); color:var(--primary); font-size:12px; font-weight:700; padding:3px 10px; border-radius:12px; margin-bottom:10px; }
 .q-text { font-size:15px; font-weight:500; margin-bottom:14px; line-height:1.6; }
@@ -60,7 +60,6 @@ body { font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; backgr
 .option.selected { border-color:var(--accent); background:var(--accent-light); box-shadow:0 0 0 2px rgba(60,164,164,0.15); }
 .option .letter { display:flex; align-items:center; justify-content:center; width:28px; height:28px; min-width:28px; border-radius:50%; background:var(--bg); font-weight:700; font-size:13px; color:var(--primary); }
 
-/* Results */
 .result-header { text-align:center; padding:40px 0 32px; }
 .type-display { font-size:72px; font-weight:800; color:var(--primary); letter-spacing:8px; line-height:1; margin-bottom:8px; }
 .type-subtitle { font-size:20px; color:var(--text-light); font-weight:400; font-style:italic; }
@@ -74,7 +73,6 @@ body { font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; backgr
 .dim-bar-right { background:var(--accent); border-radius:0 14px 14px 0; }
 .dim-desc { font-size:12px; color:var(--text-light); margin-top:4px; font-style:italic; }
 
-.eval-section { margin-bottom:0; }
 .eval-section h3 { font-size:17px; color:var(--primary); margin-bottom:8px; }
 .eval-section p { font-size:14px; line-height:1.8; }
 
@@ -93,7 +91,9 @@ body { font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; backgr
 .disclaimer { text-align:center; font-size:11px; color:#b2bec3; margin-top:32px; line-height:1.6; }
 .footer { text-align:center; padding:32px 0; color:var(--text-light); font-size:12px; }
 
-/* Navigation */
+/* PDF content — hidden on screen, used for html2pdf render */
+#pdf-content { display:none; }
+
 .nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
 .back-link { color:var(--primary); text-decoration:none; font-size:14px; cursor:pointer; }
 .back-link:hover { text-decoration:underline; }
@@ -117,33 +117,38 @@ body { font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; backgr
 <div id="page-landing" class="container">
     <div class="header">
         <div class="logo">🧠</div>
-        <h1>Discover Your Personality Type</h1>
-        <p>Answer a series of questions to discover your MBTI type and gain insight into your personality.</p>
+        <h1 id="landing-title">Discover Your Personality Type</h1>
+        <p id="landing-sub">Answer a series of questions to discover your MBTI type and gain insight into your personality.</p>
     </div>
     <div class="card">
-        <h2 style="font-size:18px;margin-bottom:6px;">Choose Your Assessment</h2>
-        <p style="color:var(--text-light);font-size:14px;">Select the number of questions you would like to answer.</p>
+        <!-- Language -->
+        <h2 style="font-size:18px;margin-bottom:12px;" id="lang-heading">Language / 语言</h2>
+        <div class="lang-select">
+            <button id="btn-en" class="active" onclick="setLang('en')">English</button>
+            <button id="btn-zh" onclick="setLang('zh')">中文</button>
+        </div>
+        <!-- Question count -->
+        <h2 style="font-size:18px;margin-bottom:6px;margin-top:20px;" id="count-heading">Choose Your Assessment</h2>
+        <p style="color:var(--text-light);font-size:14px;" id="count-sub">Select the number of questions you would like to answer.</p>
         <div class="choice-grid">
             <div class="choice-card selected" data-n="25" onclick="selectCount(this)">
-                <span class="num">25</span><span class="label">Questions</span>
-                <span style="font-size:12px;color:var(--text-light);display:block;margin-top:4px;">~5 minutes</span>
+                <span class="num">25</span><span class="label" id="label-25">Questions (~5 min)</span>
             </div>
             <div class="choice-card" data-n="50" onclick="selectCount(this)">
-                <span class="num">50</span><span class="label">Questions</span>
-                <span style="font-size:12px;color:var(--text-light);display:block;margin-top:4px;">~10 minutes</span>
+                <span class="num">50</span><span class="label" id="label-50">Questions (~10 min)</span>
             </div>
         </div>
         <div style="text-align:center;">
-            <button class="btn" onclick="startTest()">Start Test</button>
+            <button class="btn" id="btn-start" onclick="startTest()">Start Test</button>
         </div>
     </div>
-    <div class="footer">Based on the Myers-Briggs Type Indicator (MBTI) framework.</div>
+    <div class="footer" id="footer-landing">Based on the Myers-Briggs Type Indicator (MBTI) framework.</div>
 </div>
 
 <!-- ═══════════ PAGE: TEST ═══════════ -->
 <div id="page-test" class="container" style="display:none;">
     <div class="nav">
-        <span class="back-link" onclick="goLanding()">← Back</span>
+        <span class="back-link" id="back-link" onclick="goLanding()">← Back</span>
         <span id="test-label" style="font-size:14px;color:var(--text-light);">25 Questions</span>
     </div>
     <div class="progress-wrap"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
@@ -151,23 +156,23 @@ body { font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; backgr
         <div id="questions-container" class="q-section"></div>
         <div style="text-align:center;padding:12px 0;">
             <p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">
-                Answered: <span id="answered-count">0</span> / <span id="total-count">25</span>
+                <span id="answered-label">Answered</span>: <span id="answered-count">0</span> / <span id="total-count">25</span>
             </p>
-            <button type="submit" class="btn" id="submit-btn" disabled>Submit & See Results</button>
+            <button type="submit" class="btn" id="submit-btn" disabled><span id="submit-text">Submit & See Results</span></button>
         </div>
     </form>
-    <div class="footer">Answer all questions to get the most accurate result.</div>
+    <div class="footer" id="footer-test">Answer all questions to get the most accurate result.</div>
 </div>
 
 <!-- ═══════════ PAGE: RESULT ═══════════ -->
 <div id="page-result" class="container" style="display:none;">
     <div class="result-header">
-        <p style="color:var(--text-light);font-size:14px;margin-bottom:4px;">Your Personality Type</p>
+        <p style="color:var(--text-light);font-size:14px;margin-bottom:4px;" id="result-type-label">Your Personality Type</p>
         <div class="type-display" id="result-type"></div>
         <div class="type-subtitle" id="result-title"></div>
     </div>
     <div class="card dim-section">
-        <h2>Dimension Breakdown</h2>
+        <h2 id="dim-heading">Dimension Breakdown</h2>
         <div id="dim-bars"></div>
     </div>
     <div class="card eval-section" id="result-overview"></div>
@@ -175,96 +180,685 @@ body { font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; backgr
     <div class="card eval-section" id="result-work"></div>
     <div class="strength-weakness" id="result-sw"></div>
     <div class="actions">
-        <button class="btn btn-secondary" onclick="goLanding()">Take the Test Again</button>
-        <button class="btn btn-download" id="btn-download" onclick="downloadWord()">Download Word Report</button>
+        <button class="btn btn-secondary" id="btn-retake" onclick="goLanding()">Take the Test Again</button>
+        <button class="btn btn-download" id="btn-download" onclick="downloadPDF()">Download PDF Report</button>
     </div>
-    <p class="disclaimer">This report is generated for informational and educational purposes. MBTI is a personality indicator, not a diagnostic tool. Personality is complex and cannot be fully captured by any single assessment.</p>
-    <div class="footer">Based on the Myers-Briggs Type Indicator (MBTI) framework.</div>
+    <p class="disclaimer" id="result-disclaimer"></p>
+    <div class="footer" id="footer-result">Based on the Myers-Briggs Type Indicator (MBTI) framework.</div>
+</div>
+
+<!-- ═══════════ PDF TEMPLATE (hidden) ═══════════ -->
+<div id="pdf-content">
+    <style>
+        #pdf-content { font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; padding:30px; color:#2d3436; }
+        #pdf-content h1 { color:#2c5f8a; font-size:22px; margin-bottom:16px; text-align:center; }
+        #pdf-content .pdf-subtitle { text-align:center; color:#888; font-size:13px; margin-bottom:24px; }
+        #pdf-content .pdf-type { text-align:center; font-size:48px; font-weight:800; color:#2c5f8a; letter-spacing:6px; margin:16px 0; }
+        #pdf-content .pdf-typename { text-align:center; font-size:16px; color:#888; font-style:italic; margin-bottom:24px; }
+        #pdf-content h2 { color:#2c5f8a; font-size:15px; margin:18px 0 8px; border-bottom:1px solid #e0e6ed; padding-bottom:4px; }
+        #pdf-content p { font-size:12px; line-height:1.7; margin-bottom:10px; }
+        #pdf-content .pdf-bar-row { margin-bottom:12px; }
+        #pdf-content .pdf-bar-label { font-size:11px; font-weight:600; color:#636e72; margin-bottom:2px; }
+        #pdf-content .pdf-bar-box { display:flex; height:18px; border-radius:9px; overflow:hidden; }
+        #pdf-content .pdf-bar-left { display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff; background:#2c5f8a; }
+        #pdf-content .pdf-bar-right { display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff; background:#3ca4a4; }
+        #pdf-content .pdf-bar-desc { font-size:10px; color:#888; font-style:italic; margin-bottom:8px; }
+        #pdf-content ul { margin-bottom:12px; padding-left:16px; }
+        #pdf-content li { font-size:12px; padding:2px 0; line-height:1.5; }
+        #pdf-content .pdf-footer { margin-top:24px; font-size:10px; color:#bbb; text-align:center; font-style:italic; }
+    </style>
+    <h1 id="pdf-report-title"></h1>
+    <div class="pdf-subtitle" id="pdf-report-subtitle"></div>
+    <div class="pdf-type" id="pdf-type"></div>
+    <div class="pdf-typename" id="pdf-type-name"></div>
+    <h2 id="pdf-dim-heading"></h2>
+    <div id="pdf-dims"></div>
+    <h2 id="pdf-overview-heading">Overview</h2>
+    <p id="pdf-overview"></p>
+    <h2 id="pdf-traits-heading">Key Traits</h2>
+    <p id="pdf-traits"></p>
+    <h2 id="pdf-work-heading">Work Style & Career</h2>
+    <p id="pdf-work"></p>
+    <h2 id="pdf-strengths-heading">Strengths</h2>
+    <ul id="pdf-strengths"></ul>
+    <h2 id="pdf-weaknesses-heading">Areas for Growth</h2>
+    <ul id="pdf-weaknesses"></ul>
+    <div class="pdf-footer" id="pdf-footer"></div>
 </div>
 
 <script>
 // ═══════════════════════════════════════════
-// DATA: Questions
+// LANGUAGE I18N
 // ═══════════════════════════════════════════
-// swap=false → A=pole1 (E/S/T/J), B=pole2 (I/N/F/P)
-// swap=true  → A=pole2 (I/N/F/P), B=pole1 (E/S/T/J)
+const I18N = {
+en: {
+    landingTitle:"Discover Your Personality Type",
+    landingSub:"Answer a series of questions to discover your MBTI type and gain insight into your personality.",
+    langHeading:"Language / 语言",
+    countHeading:"Choose Your Assessment",
+    countSub:"Select the number of questions you would like to answer.",
+    label25:"Questions (~5 min)",
+    label50:"Questions (~10 min)",
+    btnStart:"Start Test",
+    footerLanding:"Based on the Myers-Briggs Type Indicator (MBTI) framework.",
+    backLink:"← Back",
+    answeredLabel:"Answered",
+    submitText:"Submit & See Results",
+    footerTest:"Answer all questions to get the most accurate result.",
+    resultTypeLabel:"Your Personality Type",
+    dimHeading:"Dimension Breakdown",
+    btnRetake:"Take the Test Again",
+    btnDownload:"Download PDF Report",
+    disclaimer:"This report is generated for informational and educational purposes. MBTI is a personality indicator, not a diagnostic tool. Personality is complex and cannot be fully captured by any single assessment.",
+    footerResult:"Based on the Myers-Briggs Type Indicator (MBTI) framework.",
+    pdfReportTitle:"MBTI Personality Report",
+    pdfReportSub:"Myers-Briggs Type Indicator — Personal Assessment",
+    pdfDimHeading:"Dimension Breakdown",
+    pdfOverviewHeading:"Overview",
+    pdfTraitsHeading:"Key Traits",
+    pdfWorkHeading:"Work Style & Career",
+    pdfStrengthsHeading:"Strengths",
+    pdfWeaknessesHeading:"Areas for Growth",
+    pdfFooter:"This report is generated for informational and educational purposes.",
+    dimDescs:{EI:"Extraversion vs Introversion",SN:"Sensing vs Intuition",TF:"Thinking vs Feeling",JP:"Judging vs Perceiving"},
+    dimMeanings:{EI:"Where you focus your attention and get energy",SN:"How you take in information and perceive the world",TF:"How you make decisions and evaluate information",JP:"How you approach structure and the outer world"},
+    strengthsLabel:"Strengths",
+    weaknessesLabel:"Areas for Growth",
+},
+zh: {
+    landingTitle:"探索你的人格类型",
+    landingSub:"回答一系列问题，发现你的 MBTI 类型，深入了解你的性格特质。",
+    langHeading:"语言 / Language",
+    countHeading:"选择你的评估",
+    countSub:"选择你想回答的题目数量。",
+    label25:"25 题（约 5 分钟）",
+    label50:"50 题（约 10 分钟）",
+    btnStart:"开始测试",
+    footerLanding:"基于 Myers-Briggs Type Indicator (MBTI) 框架。",
+    backLink:"← 返回",
+    answeredLabel:"已答",
+    submitText:"提交并查看结果",
+    footerTest:"回答所有问题以获得最准确的结果。",
+    resultTypeLabel:"你的人格类型",
+    dimHeading:"维度分析",
+    btnRetake:"重新测试",
+    btnDownload:"下载 PDF 报告",
+    disclaimer:"本报告仅供信息参考和教育用途。MBTI 是一种人格指标，而非诊断工具。人格是复杂的，任何单一评估都无法完全涵盖。",
+    footerResult:"基于 Myers-Briggs Type Indicator (MBTI) 框架。",
+    pdfReportTitle:"MBTI 人格分析报告",
+    pdfReportSub:"Myers-Briggs Type Indicator — 个人评估",
+    pdfDimHeading:"维度分析",
+    pdfOverviewHeading:"概述",
+    pdfTraitsHeading:"核心特质",
+    pdfWorkHeading:"工作风格与职业",
+    pdfStrengthsHeading:"优势",
+    pdfWeaknessesHeading:"成长方向",
+    pdfFooter:"本报告仅供信息参考和教育用途。",
+    dimDescs:{EI:"外向 vs 内向",SN:"实感 vs 直觉",TF:"思考 vs 情感",JP:"判断 vs 感知"},
+    dimMeanings:{EI:"你关注注意力和获取能量的方向",SN:"你如何接收和感知信息",TF:"你如何做出决策和评估信息",JP:"你如何应对外部世界的结构和秩序"},
+    strengthsLabel:"优势",
+    weaknessesLabel:"成长方向",
+}
+};
+
+let lang = 'en';
+function t(key) { return I18N[lang][key] || key; }
+function setLang(l) {
+    lang = l;
+    document.querySelectorAll('#lang-select button, .lang-select button').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-' + l).classList.add('active');
+    // Update landing page labels
+    document.getElementById('landing-title').textContent = t('landingTitle');
+    document.getElementById('landing-sub').textContent = t('landingSub');
+    document.getElementById('lang-heading').textContent = t('langHeading');
+    document.getElementById('count-heading').textContent = t('countHeading');
+    document.getElementById('count-sub').textContent = t('countSub');
+    document.getElementById('label-25').textContent = t('label25');
+    document.getElementById('label-50').textContent = t('label50');
+    document.getElementById('btn-start').textContent = t('btnStart');
+    document.getElementById('footer-landing').textContent = t('footerLanding');
+}
+
+// ═══════════════════════════════════════════
+// DATA: Bilingual Questions (50)
+// ═══════════════════════════════════════════
 const ALL_QUESTIONS = [
-    // EI (13) — 7 swapped, 6 not
-    {id:1,dim:"EI",swap:false,optA:"Go out with friends, social events energize me",optB:"Stay home with a book or movie, solitude restores me",text:"After a long week, how do you prefer to recharge?"},
-    {id:2,dim:"EI",swap:true,optA:"I prefer deeper conversations with a few people",optB:"I enjoy talking to many people and working the room",text:"At a party, you tend to:"},
-    {id:3,dim:"EI",swap:false,optA:"Brainstorming out loud with a team",optB:"Thinking things through independently first",text:"When working on a project, you prefer:"},
-    {id:4,dim:"EI",swap:true,optA:"Reserved and reflective",optB:"Outgoing and talkative",text:"People describe you as:"},
-    {id:5,dim:"EI",swap:false,optA:"Say it immediately, thinking as you speak",optB:"Formulate it fully in my mind before speaking",text:"When you have something to share, you:"},
-    {id:6,dim:"EI",swap:true,optA:"Listen carefully and speak when I have something solid",optB:"Jump in and contribute ideas freely",text:"In a group discussion, you are more likely to:"},
-    {id:7,dim:"EI",swap:false,optA:"Open, bustling, lots of interaction",optB:"Quiet, private, minimal distractions",text:"Your ideal work environment is:"},
-    {id:8,dim:"EI",swap:true,optA:"Cautious and observant at first",optB:"Excited and energized",text:"When meeting new people, you feel:"},
-    {id:9,dim:"EI",swap:false,optA:"Phone calls or face-to-face — faster and more dynamic",optB:"Text or email — gives me time to craft my response",text:"You prefer to communicate via:"},
-    {id:10,dim:"EI",swap:true,optA:"Drained and needing alone time",optB:"Energized and happy",text:"After attending a large social event, you feel:"},
-    {id:11,dim:"EI",swap:true,optA:"Reflect on it alone before discussing",optB:"Talk it through with others to clarify my thoughts",text:"When solving a problem, you tend to:"},
-    {id:12,dim:"EI",swap:false,optA:"Initiate plans and bring people together",optB:"Are selective with social plans and value depth over breadth",text:"Your friends would say you:"},
-    {id:13,dim:"EI",swap:true,optA:"Keep to yourself and observe quietly",optB:"Strike up a conversation with a stranger",text:"In a waiting room or on public transport, you:"},
-    // SN (13) — 6 swapped, 7 not
-    {id:14,dim:"SN",swap:false,optA:"Step-by-step instructions with concrete examples",optB:"Understanding the big picture and underlying theory first",text:"When learning something new, you prefer:"},
-    {id:15,dim:"SN",swap:true,optA:"Gut feelings and new possibilities",optB:"Past experience and proven methods",text:"You trust more:"},
-    {id:16,dim:"SN",swap:false,optA:"I focus on details and practical realities",optB:"I enjoy exploring abstract ideas and patterns",text:"Which describes you better?"},
-    {id:17,dim:"SN",swap:true,optA:"Themes, implications, and the author's vision",optB:"Facts, data, and specific examples",text:"When reading, you pay more attention to:"},
-    {id:18,dim:"SN",swap:false,optA:"Follow an established process that works",optB:"Experiment and find a new, possibly better way",text:"Given a new task, you prefer to:"},
-    {id:19,dim:"SN",swap:true,optA:"What could be, future possibilities and innovations",optB:"What is happening right now, the tangible reality",text:"You are more interested in:"},
-    {id:20,dim:"SN",swap:false,optA:"Practical, down-to-earth topics",optB:"Theoretical, imaginative discussions",text:"In a conversation, you find yourself drawn to:"},
-    {id:21,dim:"SN",swap:true,optA:"Patterns, connections, and intuitive leaps",optB:"Concrete data and observable facts",text:"When making a decision, you rely more on:"},
-    {id:22,dim:"SN",swap:false,optA:"Realistic and grounded",optB:"Visionary and idea-driven",text:"You would describe yourself as:"},
-    {id:23,dim:"SN",swap:false,optA:"Breaking it down into manageable, concrete steps",optB:"Looking for the underlying principle that connects everything",text:"When tackling a complex problem, you start with:"},
-    {id:24,dim:"SN",swap:true,optA:"Brainstorming innovative approaches and new projects",optB:"Executing tasks with precision and consistency",text:"At work, you are more energized by:"},
-    {id:25,dim:"SN",swap:false,optA:"Cooking, woodworking, or gardening — hands-on and sensory",optB:"Writing, painting, or learning philosophy — creative and abstract",text:"Which hobby appeals to you more?"},
-    {id:26,dim:"SN",swap:true,optA:"Get to the point and share the meaning behind it",optB:"Give a clear, chronological account with all the details",text:"When someone tells a story, you want them to:"},
-    // TF (12) — 6 swapped, 6 not
-    {id:27,dim:"TF",swap:false,optA:"Logic, fairness, and objective analysis",optB:"Impact on people, harmony, and personal values",text:"When making an important decision, you prioritize:"},
-    {id:28,dim:"TF",swap:true,optA:"Acknowledge their feelings and try to find a compromise",optB:"Explain the rationale and data behind the decision",text:"A colleague is upset about a decision. You tend to:"},
-    {id:29,dim:"TF",swap:false,optA:"A well-reasoned, logically flawless argument",optB:"A deeply empathetic and compassionate act",text:"You are more impressed by:"},
-    {id:30,dim:"TF",swap:true,optA:"Understanding the values and motivations behind each position",optB:"Spotting inconsistencies and flaws in the logic",text:"In a debate, you focus on:"},
-    {id:31,dim:"TF",swap:false,optA:"Direct and critical — honesty helps people improve",optB:"Encouraging and supportive — I avoid hurting feelings",text:"When giving feedback, you tend to be:"},
-    {id:32,dim:"TF",swap:true,optA:"Individual circumstances and context are taken into account",optB:"Rules are applied consistently and impartially",text:"You believe justice is best served when:"},
-    {id:33,dim:"TF",swap:false,optA:"Analytical and objective",optB:"Warm and compassionate",text:"People would describe you as:"},
-    {id:34,dim:"TF",swap:true,optA:"Listen and provide emotional support",optB:"Offer practical solutions and a plan of action",text:"When a friend is going through a tough time, you first:"},
-    {id:35,dim:"TF",swap:false,optA:"Getting the job done efficiently and correctly",optB:"Maintaining positive team dynamics and morale",text:"At work, you are more concerned with:"},
-    {id:36,dim:"TF",swap:true,optA:'"You hurt someone\'s feelings"',optB:'"Your reasoning doesn\'t hold up"',text:"Which criticism would bother you more?"},
-    {id:37,dim:"TF",swap:false,optA:"Makes tough, data-driven decisions even when unpopular",optB:"Builds consensus and cares deeply about the team's well-being",text:"You respect a leader who:"},
-    {id:38,dim:"TF",swap:true,optA:"How it makes you feel, aesthetics, and personal fit",optB:"Specifications, performance data, and cost-benefit analysis",text:"When evaluating a purchase, you look at:"},
-    // JP (12) — 6 swapped, 6 not
-    {id:39,dim:"JP",swap:true,optA:"I prefer to stay flexible and see where the day takes me",optB:"I like having a clear schedule and sticking to it",text:"How do you approach your daily life?"},
-    {id:40,dim:"JP",swap:false,optA:"Plan ahead and finish early to avoid last-minute stress",optB:"Work best under pressure, often pulling things together at the end",text:"When working on a deadline, you:"},
-    {id:41,dim:"JP",swap:true,optA:"Options are kept open and plans can change",optB:"Decisions are made and things are settled",text:"You feel more comfortable when:"},
-    {id:42,dim:"JP",swap:false,optA:"Organized and tidy, everything in its place",optB:"A bit chaotic but I know where everything is",text:"Your desk or workspace is usually:"},
-    {id:43,dim:"JP",swap:true,optA:"Dive in and figure it out as you go",optB:"Break it into steps with milestones and a timeline",text:"When starting a big project, you:"},
-    {id:44,dim:"JP",swap:false,optA:"They give me structure and productivity",optB:"They feel restrictive — I prefer variety and spontaneity",text:"How do you feel about routines?"},
-    {id:45,dim:"JP",swap:true,optA:"Get distracted by something interesting and change course",optB:"Check it off and move to the next planned item",text:"When you finish one task, you typically:"},
-    {id:46,dim:"JP",swap:false,optA:"Expectations, roles, and deadlines are clearly defined",optB:"There is flexibility to explore and adapt as needed",text:"You prefer a work environment where:"},
-    {id:47,dim:"JP",swap:true,optA:"Limiting — I like to keep my options open as long as possible",optB:"Satisfying — closure is important to me",text:"Making a decision feels:"},
-    {id:48,dim:"JP",swap:false,optA:"Feel frustrated and try to get back on track",optB:"Adapt easily and see it as an opportunity",text:"When plans change unexpectedly, you:"},
-    {id:49,dim:"JP",swap:true,optA:"Keep a mental list and do things as they feel right",optB:"Make a to-do list and methodically work through it",text:"You are more likely to:"},
-    {id:50,dim:"JP",swap:false,optA:"Plan, prepare, and execute with discipline",optB:"Explore, adapt, and go with the flow",text:"Which describes your approach to life better?"},
+    // EI (13)
+    {id:1,dim:"EI",swap:false,
+     text_en:"After a long week, how do you prefer to recharge?",
+     text_zh:"经过漫长的一周后，你更倾向于如何恢复精力？",
+     optA_en:"Go out with friends, social events energize me",
+     optA_zh:"和朋友出去玩，社交活动让我充满活力",
+     optB_en:"Stay home with a book or movie, solitude restores me",
+     optB_zh:"待在家里看书或电影，独处让我恢复能量"},
+    {id:2,dim:"EI",swap:true,
+     text_en:"At a party, you tend to:",
+     text_zh:"在聚会上，你倾向于：",
+     optA_en:"I prefer deeper conversations with a few people",
+     optA_zh:"我更喜欢和少数几个人深入交流",
+     optB_en:"I enjoy talking to many people and working the room",
+     optB_zh:"我喜欢和很多人交谈，活跃全场"},
+    {id:3,dim:"EI",swap:false,
+     text_en:"When working on a project, you prefer:",
+     text_zh:"在做项目时，你更喜欢：",
+     optA_en:"Brainstorming out loud with a team",
+     optA_zh:"和团队一起大声头脑风暴",
+     optB_en:"Thinking things through independently first",
+     optB_zh:"先自己独立想清楚"},
+    {id:4,dim:"EI",swap:true,
+     text_en:"People describe you as:",
+     text_zh:"别人形容你是：",
+     optA_en:"Reserved and reflective",
+     optA_zh:"内向、善于反思的",
+     optB_en:"Outgoing and talkative",
+     optB_zh:"外向、健谈的"},
+    {id:5,dim:"EI",swap:false,
+     text_en:"When you have something to share, you:",
+     text_zh:"当你有想法要表达时，你会：",
+     optA_en:"Say it immediately, thinking as you speak",
+     optA_zh:"立即说出来，边想边说",
+     optB_en:"Formulate it fully in my mind before speaking",
+     optB_zh:"在脑海中完全组织好后再开口"},
+    {id:6,dim:"EI",swap:true,
+     text_en:"In a group discussion, you are more likely to:",
+     text_zh:"在小组讨论中，你更倾向于：",
+     optA_en:"Listen carefully and speak when I have something solid",
+     optA_zh:"仔细聆听，想清楚了再发言",
+     optB_en:"Jump in and contribute ideas freely",
+     optB_zh:"积极发言，自由地贡献想法"},
+    {id:7,dim:"EI",swap:false,
+     text_en:"Your ideal work environment is:",
+     text_zh:"你理想的工作环境是：",
+     optA_en:"Open, bustling, lots of interaction",
+     optA_zh:"开放、热闹、充满互动的",
+     optB_en:"Quiet, private, minimal distractions",
+     optB_zh:"安静、私密、干扰最少的"},
+    {id:8,dim:"EI",swap:true,
+     text_en:"When meeting new people, you feel:",
+     text_zh:"遇到新认识的人时，你会感到：",
+     optA_en:"Cautious and observant at first",
+     optA_zh:"起初谨慎和观察",
+     optB_en:"Excited and energized",
+     optB_zh:"兴奋和精力充沛"},
+    {id:9,dim:"EI",swap:false,
+     text_en:"You prefer to communicate via:",
+     text_zh:"你更喜欢通过以下方式沟通：",
+     optA_en:"Phone calls or face-to-face — faster and more dynamic",
+     optA_zh:"电话或面对面 — 更快更有互动感",
+     optB_en:"Text or email — gives me time to craft my response",
+     optB_zh:"短信或邮件 — 让我有时间组织回复"},
+    {id:10,dim:"EI",swap:true,
+     text_en:"After attending a large social event, you feel:",
+     text_zh:"参加完大型社交活动后，你感到：",
+     optA_en:"Drained and needing alone time",
+     optA_zh:"精疲力尽，需要独处时间",
+     optB_en:"Energized and happy",
+     optB_zh:"精力充沛、很开心"},
+    {id:11,dim:"EI",swap:true,
+     text_en:"When solving a problem, you tend to:",
+     text_zh:"解决问题时，你倾向于：",
+     optA_en:"Reflect on it alone before discussing",
+     optA_zh:"先独自反思，再讨论",
+     optB_en:"Talk it through with others to clarify my thoughts",
+     optB_zh:"和别人边聊边理清思路"},
+    {id:12,dim:"EI",swap:false,
+     text_en:"Your friends would say you:",
+     text_zh:"你的朋友会说你：",
+     optA_en:"Initiate plans and bring people together",
+     optA_zh:"主动组织计划、召集大家",
+     optB_en:"Are selective with social plans and value depth over breadth",
+     optB_zh:"对社交计划有所选择，重视深度而非广度"},
+    {id:13,dim:"EI",swap:true,
+     text_en:"In a waiting room or on public transport, you:",
+     text_zh:"在等候室或公共交通上，你会：",
+     optA_en:"Keep to yourself and observe quietly",
+     optA_zh:"保持安静，默默观察周围",
+     optB_en:"Strike up a conversation with a stranger",
+     optB_zh:"和陌生人聊起来"},
+    // SN (13)
+    {id:14,dim:"SN",swap:false,
+     text_en:"When learning something new, you prefer:",
+     text_zh:"学习新东西时，你更喜欢：",
+     optA_en:"Step-by-step instructions with concrete examples",
+     optA_zh:"循序渐进的教学和具体案例",
+     optB_en:"Understanding the big picture and underlying theory first",
+     optB_zh:"先了解大局和背后的理论"},
+    {id:15,dim:"SN",swap:true,
+     text_en:"You trust more:",
+     text_zh:"你更相信：",
+     optA_en:"Gut feelings and new possibilities",
+     optA_zh:"直觉感受和新的可能性",
+     optB_en:"Past experience and proven methods",
+     optB_zh:"过去的经验和经过验证的方法"},
+    {id:16,dim:"SN",swap:false,
+     text_en:"Which describes you better?",
+     text_zh:"哪种描述更符合你？",
+     optA_en:"I focus on details and practical realities",
+     optA_zh:"我关注细节和实际现实",
+     optB_en:"I enjoy exploring abstract ideas and patterns",
+     optB_zh:"我喜欢探索抽象概念和模式"},
+    {id:17,dim:"SN",swap:true,
+     text_en:"When reading, you pay more attention to:",
+     text_zh:"阅读时，你更关注：",
+     optA_en:"Themes, implications, and the author's vision",
+     optA_zh:"主题、含义和作者的愿景",
+     optB_en:"Facts, data, and specific examples",
+     optB_zh:"事实、数据和具体例子"},
+    {id:18,dim:"SN",swap:false,
+     text_en:"Given a new task, you prefer to:",
+     text_zh:"面对新任务时，你更倾向于：",
+     optA_en:"Follow an established process that works",
+     optA_zh:"遵循已有的成熟流程",
+     optB_en:"Experiment and find a new, possibly better way",
+     optB_zh:"尝试并寻找新的、可能更好的方法"},
+    {id:19,dim:"SN",swap:true,
+     text_en:"You are more interested in:",
+     text_zh:"你更感兴趣的是：",
+     optA_en:"What could be, future possibilities and innovations",
+     optA_zh:"可能发生的事情、未来的可能性和创新",
+     optB_en:"What is happening right now, the tangible reality",
+     optB_zh:"正在发生的事情、眼前的现实"},
+    {id:20,dim:"SN",swap:false,
+     text_en:"In a conversation, you find yourself drawn to:",
+     text_zh:"在交谈中，你发现自己更倾向于：",
+     optA_en:"Practical, down-to-earth topics",
+     optA_zh:"实际、接地气的话题",
+     optB_en:"Theoretical, imaginative discussions",
+     optB_zh:"理论性、富有想象力的讨论"},
+    {id:21,dim:"SN",swap:true,
+     text_en:"When making a decision, you rely more on:",
+     text_zh:"做决定时，你更依赖：",
+     optA_en:"Patterns, connections, and intuitive leaps",
+     optA_zh:"模式、联系和直觉跳跃",
+     optB_en:"Concrete data and observable facts",
+     optB_zh:"具体数据和可观察的事实"},
+    {id:22,dim:"SN",swap:false,
+     text_en:"You would describe yourself as:",
+     text_zh:"你会形容自己为：",
+     optA_en:"Realistic and grounded",
+     optA_zh:"现实且脚踏实地的",
+     optB_en:"Visionary and idea-driven",
+     optB_zh:"有远见且被想法驱动的"},
+    {id:23,dim:"SN",swap:false,
+     text_en:"When tackling a complex problem, you start with:",
+     text_zh:"处理复杂问题时，你首先：",
+     optA_en:"Breaking it down into manageable, concrete steps",
+     optA_zh:"把它分解成可操作的具体步骤",
+     optB_en:"Looking for the underlying principle that connects everything",
+     optB_zh:"寻找将一切联系起来的底层原理"},
+    {id:24,dim:"SN",swap:true,
+     text_en:"At work, you are more energized by:",
+     text_zh:"工作中，什么更让你充满动力：",
+     optA_en:"Brainstorming innovative approaches and new projects",
+     optA_zh:"头脑风暴创新方法和新项目",
+     optB_en:"Executing tasks with precision and consistency",
+     optB_zh:"精确一致地执行任务"},
+    {id:25,dim:"SN",swap:false,
+     text_en:"Which hobby appeals to you more?",
+     text_zh:"哪个爱好更吸引你？",
+     optA_en:"Cooking, woodworking, or gardening — hands-on and sensory",
+     optA_zh:"烹饪、木工或园艺 — 动手操作、感官体验",
+     optB_en:"Writing, painting, or learning philosophy — creative and abstract",
+     optB_zh:"写作、绘画或学习哲学 — 创意和抽象思维"},
+    {id:26,dim:"SN",swap:true,
+     text_en:"When someone tells a story, you want them to:",
+     text_zh:"听人讲故事时，你希望对方：",
+     optA_en:"Get to the point and share the meaning behind it",
+     optA_zh:"直接说重点和背后的意义",
+     optB_en:"Give a clear, chronological account with all the details",
+     optB_zh:"按时间顺序清楚叙述所有细节"},
+    // TF (12)
+    {id:27,dim:"TF",swap:false,
+     text_en:"When making an important decision, you prioritize:",
+     text_zh:"做重要决定时，你优先考虑：",
+     optA_en:"Logic, fairness, and objective analysis",
+     optA_zh:"逻辑、公平和客观分析",
+     optB_en:"Impact on people, harmony, and personal values",
+     optB_zh:"对人的影响、和谐和个人价值观"},
+    {id:28,dim:"TF",swap:true,
+     text_en:"A colleague is upset about a decision. You tend to:",
+     text_zh:"同事对某个决定不满时，你倾向于：",
+     optA_en:"Acknowledge their feelings and try to find a compromise",
+     optA_zh:"认可他们的感受，尝试找到折中方案",
+     optB_en:"Explain the rationale and data behind the decision",
+     optB_zh:"解释决定背后的逻辑和数据"},
+    {id:29,dim:"TF",swap:false,
+     text_en:"You are more impressed by:",
+     text_zh:"你更欣赏：",
+     optA_en:"A well-reasoned, logically flawless argument",
+     optA_zh:"一个推理严密、逻辑无懈可击的论证",
+     optB_en:"A deeply empathetic and compassionate act",
+     optB_zh:"一个充满同理心和善意的行动"},
+    {id:30,dim:"TF",swap:true,
+     text_en:"In a debate, you focus on:",
+     text_zh:"在辩论中，你更关注：",
+     optA_en:"Understanding the values and motivations behind each position",
+     optA_zh:"理解每个立场背后的价值观和动机",
+     optB_en:"Spotting inconsistencies and flaws in the logic",
+     optB_zh:"发现逻辑中的不一致和漏洞"},
+    {id:31,dim:"TF",swap:false,
+     text_en:"When giving feedback, you tend to be:",
+     text_zh:"给反馈时，你倾向于：",
+     optA_en:"Direct and critical — honesty helps people improve",
+     optA_zh:"直接和批评性的 — 诚实有助于人进步",
+     optB_en:"Encouraging and supportive — I avoid hurting feelings",
+     optB_zh:"鼓励和支持性的 — 我避免伤害感情"},
+    {id:32,dim:"TF",swap:true,
+     text_en:"You believe justice is best served when:",
+     text_zh:"你认为公正最好通过以下方式实现：",
+     optA_en:"Individual circumstances and context are taken into account",
+     optA_zh:"考虑个人的具体情况和背景",
+     optB_en:"Rules are applied consistently and impartially",
+     optB_zh:"规则被一致、公正地执行"},
+    {id:33,dim:"TF",swap:false,
+     text_en:"People would describe you as:",
+     text_zh:"人们会形容你是：",
+     optA_en:"Analytical and objective",
+     optA_zh:"分析型、客观的",
+     optB_en:"Warm and compassionate",
+     optB_zh:"温暖、有同情心的"},
+    {id:34,dim:"TF",swap:true,
+     text_en:"When a friend is going through a tough time, you first:",
+     text_zh:"朋友遇到困难时，你首先：",
+     optA_en:"Listen and provide emotional support",
+     optA_zh:"倾听并提供情感支持",
+     optB_en:"Offer practical solutions and a plan of action",
+     optB_zh:"提供实际的解决方案和行动计划"},
+    {id:35,dim:"TF",swap:false,
+     text_en:"At work, you are more concerned with:",
+     text_zh:"工作中，你更关注：",
+     optA_en:"Getting the job done efficiently and correctly",
+     optA_zh:"高效正确地完成任务",
+     optB_en:"Maintaining positive team dynamics and morale",
+     optB_zh:"维护积极的团队氛围和士气"},
+    {id:36,dim:"TF",swap:true,
+     text_en:"Which criticism would bother you more?",
+     text_zh:"哪种批评更让你难受？",
+     optA_en:'"You hurt someone\'s feelings"',
+     optA_zh:"「你伤害了某人的感受」",
+     optB_en:'"Your reasoning doesn\'t hold up"',
+     optB_zh:"「你的逻辑站不住脚」"},
+    {id:37,dim:"TF",swap:false,
+     text_en:"You respect a leader who:",
+     text_zh:"你更尊重哪种领导者：",
+     optA_en:"Makes tough, data-driven decisions even when unpopular",
+     optA_zh:"做出艰难但基于数据的决定，即使不受欢迎",
+     optB_en:"Builds consensus and cares deeply about the team's well-being",
+     optB_zh:"建立共识，深切关心团队的福祉"},
+    {id:38,dim:"TF",swap:true,
+     text_en:"When evaluating a purchase, you look at:",
+     text_zh:"评估购买决策时，你更看重：",
+     optA_en:"How it makes you feel, aesthetics, and personal fit",
+     optA_zh:"给你的感觉、美观和个人匹配度",
+     optB_en:"Specifications, performance data, and cost-benefit analysis",
+     optB_zh:"规格参数、性能数据和性价比分析"},
+    // JP (12)
+    {id:39,dim:"JP",swap:true,
+     text_en:"How do you approach your daily life?",
+     text_zh:"你如何安排日常生活？",
+     optA_en:"I prefer to stay flexible and see where the day takes me",
+     optA_zh:"我偏好保持灵活，顺着当天的感觉走",
+     optB_en:"I like having a clear schedule and sticking to it",
+     optB_zh:"我喜欢有清晰的日程安排并严格执行"},
+    {id:40,dim:"JP",swap:false,
+     text_en:"When working on a deadline, you:",
+     text_zh:"面对截止日期时，你会：",
+     optA_en:"Plan ahead and finish early to avoid last-minute stress",
+     optA_zh:"提前规划、尽早完成，避免最后的压力",
+     optB_en:"Work best under pressure, often pulling things together at the end",
+     optB_zh:"压力下效率最高，通常在最后时刻集中完成"},
+    {id:41,dim:"JP",swap:true,
+     text_en:"You feel more comfortable when:",
+     text_zh:"哪种情况让你更舒服？",
+     optA_en:"Options are kept open and plans can change",
+     optA_zh:"选项保持开放，计划可以调整",
+     optB_en:"Decisions are made and things are settled",
+     optB_zh:"决定已经做出，事情已经敲定"},
+    {id:42,dim:"JP",swap:false,
+     text_en:"Your desk or workspace is usually:",
+     text_zh:"你的桌面或工作区域通常是：",
+     optA_en:"Organized and tidy, everything in its place",
+     optA_zh:"整齐有序，一切各就各位",
+     optB_en:"A bit chaotic but I know where everything is",
+     optB_zh:"有点乱，但我知道东西在哪"},
+    {id:43,dim:"JP",swap:true,
+     text_en:"When starting a big project, you:",
+     text_zh:"开始一个大型项目时，你会：",
+     optA_en:"Dive in and figure it out as you go",
+     optA_zh:"直接开始，边走边摸索",
+     optB_en:"Break it into steps with milestones and a timeline",
+     optB_zh:"拆分为有里程碑和时间节点的步骤"},
+    {id:44,dim:"JP",swap:false,
+     text_en:"How do you feel about routines?",
+     text_zh:"你对日常习惯怎么看？",
+     optA_en:"They give me structure and productivity",
+     optA_zh:"它们给我结构和效率",
+     optB_en:"They feel restrictive — I prefer variety and spontaneity",
+     optB_zh:"它们让人感到束缚 — 我更喜欢变化和随意"},
+    {id:45,dim:"JP",swap:true,
+     text_en:"When you finish one task, you typically:",
+     text_zh:"完成一项任务后，你通常会：",
+     optA_en:"Get distracted by something interesting and change course",
+     optA_zh:"被有趣的事情吸引，改变方向",
+     optB_en:"Check it off and move to the next planned item",
+     optB_zh:"标记完成，然后转向计划中的下一项"},
+    {id:46,dim:"JP",swap:false,
+     text_en:"You prefer a work environment where:",
+     text_zh:"你更喜欢哪种工作环境？",
+     optA_en:"Expectations, roles, and deadlines are clearly defined",
+     optA_zh:"期望、角色和截止日期都清晰明确",
+     optB_en:"There is flexibility to explore and adapt as needed",
+     optB_zh:"有灵活性可以按需探索和调整"},
+    {id:47,dim:"JP",swap:true,
+     text_en:"Making a decision feels:",
+     text_zh:"做决定让你感觉：",
+     optA_en:"Limiting — I like to keep my options open as long as possible",
+     optA_zh:"有束缚感 — 我喜欢尽可能保持选择开放",
+     optB_en:"Satisfying — closure is important to me",
+     optB_zh:"有满足感 — 了结一件事情对我很重要"},
+    {id:48,dim:"JP",swap:false,
+     text_en:"When plans change unexpectedly, you:",
+     text_zh:"计划意外变动时，你会：",
+     optA_en:"Feel frustrated and try to get back on track",
+     optA_zh:"感到沮丧，试图回到正轨",
+     optB_en:"Adapt easily and see it as an opportunity",
+     optB_zh:"轻松适应，视之为一个新机会"},
+    {id:49,dim:"JP",swap:true,
+     text_en:"You are more likely to:",
+     text_zh:"你更倾向于：",
+     optA_en:"Keep a mental list and do things as they feel right",
+     optA_zh:"在心里记着，凭感觉安排",
+     optB_en:"Make a to-do list and methodically work through it",
+     optB_zh:"列一个待办清单，有条不紊地完成"},
+    {id:50,dim:"JP",swap:false,
+     text_en:"Which describes your approach to life better?",
+     text_zh:"哪种描述更符合你的生活态度？",
+     optA_en:"Plan, prepare, and execute with discipline",
+     optA_zh:"计划、准备、自律地执行",
+     optB_en:"Explore, adapt, and go with the flow",
+     optB_zh:"探索、适应、随遇而安"},
 ];
 
 // ═══════════════════════════════════════════
-// DATA: Personality DB
+// DATA: Bilingual Personality DB
 // ═══════════════════════════════════════════
 const PERSONALITY = {
-INTJ:{title:"The Architect",overview:"Strategic, analytical, and independent. INTJs are natural planners who see the world as a complex system to be understood and improved. They are driven by an inner vision and have a remarkable ability to focus deeply on their goals.",traits:"Rational, decisive, visionary, and highly self-disciplined. INTJs trust logic over emotion and prefer to work independently on long-term projects. They value competence and intelligence in themselves and others.",work:"Systematic and strategic. INTJs excel at creating long-term plans and executing them with precision. They prefer autonomy, dislike micromanagement, and thrive in environments that reward intellectual rigor.",strengths:"Exceptional strategic thinking, strong analytical ability, unwavering determination, independent and self-motivated, able to see the big picture while managing details",weaknesses:"May come across as aloof or dismissive of emotions, can be overly critical, struggles with social small talk, may overlook others' need for emotional validation"},
-INTP:{title:"The Logician",overview:"Innovative, curious, and deeply analytical. INTPs are driven by an insatiable desire to understand how things work. They are natural philosophers and inventors who love exploring abstract concepts.",traits:"Logical, original, open-minded, and intellectually playful. INTPs enjoy deconstructing ideas and reconstructing them in novel ways. They value truth and precision above all else.",work:"Flexible and idea-driven. INTPs work best when given intellectual freedom and minimal structure. They excel at solving complex theoretical problems but may struggle with routine tasks.",strengths:"Brilliant problem-solving ability, creative and original thinking, objective and fair-minded, deep curiosity, excellent at pattern recognition",weaknesses:"Can overthink and get lost in analysis, may neglect practical details, struggles with deadlines and structure, can be socially withdrawn"},
-ENTJ:{title:"The Commander",overview:"Bold, charismatic, and decisive. ENTJs are natural-born leaders who thrive on challenge and achievement. They have a clear vision of the future and the drive to make it happen.",traits:"Confident, strategic, and highly driven. ENTJs are assertive communicators who inspire others to action. They value efficiency, competence, and measurable results.",work:"Goal-oriented and structured. ENTJs take charge, set ambitious targets, and mobilize teams to achieve them. They prefer fast-paced, competitive environments.",strengths:"Strong leadership and organizational skills, decisive and action-oriented, excellent strategic planner, inspiring communicator, resilient under pressure",weaknesses:"Can be domineering or impatient, may overlook emotions, tends to be overly critical of underperformance, may struggle with work-life balance"},
-ENTP:{title:"The Debater",overview:"Witty, curious, and endlessly creative. ENTPs are idea machines who thrive on intellectual challenge and lively debate. They see possibilities everywhere.",traits:"Quick-thinking, charismatic, and adaptable. ENTPs enjoy challenging conventions and exploring new perspectives. They are energetic brainstormers who love starting new projects.",work:"Flexible and entrepreneurial. ENTPs work best in dynamic, stimulating environments. They excel at generating ideas and solving novel problems but may lose interest in execution.",strengths:"Exceptional creativity, quick learner, excellent debater and communicator, adaptable and resourceful, sees opportunities others miss",weaknesses:"Can be argumentative for its own sake, struggles with follow-through, easily bored with routine, may neglect practical constraints"},
-INFJ:{title:"The Advocate",overview:"Insightful, idealistic, and deeply compassionate. INFJs combine vision with empathy, driven by a desire to help others and make the world a better place.",traits:"Intuitive, principled, and quietly determined. INFJs have a deep understanding of people and complex emotional dynamics. They are selective but intensely loyal.",work:"Purpose-driven and organized. INFJs need meaningful work aligned with their values. They prefer calm, harmonious environments and excel at understanding people's needs.",strengths:"Deep empathy and insight into people, strong values and integrity, creative and visionary, persistent when committed, excellent written communicator",weaknesses:"Prone to burnout from caring too much, can be overly sensitive to criticism, struggles with tough confrontations, may set unrealistic standards"},
-INFP:{title:"The Mediator",overview:"Idealistic, creative, and deeply value-driven. INFPs see the potential for beauty and goodness in everything. They are guided by a strong inner moral compass.",traits:"Compassionate, imaginative, and authentic. INFPs seek meaning and purpose in all they do. They are gentle souls with a fierce commitment to their principles.",work:"Flexible and inspiration-driven. INFPs need creative freedom and work that aligns with their values. They excel at writing, counseling, and creative pursuits.",strengths:"Strong empathy and emotional intelligence, deep creativity and imagination, unwavering integrity, open-minded, excellent listener",weaknesses:"Can be overly idealistic, takes criticism personally, struggles with practical or mundane tasks, may avoid conflict to a fault"},
-ENFJ:{title:"The Protagonist",overview:"Charismatic, inspiring, and deeply caring. ENFJs are natural mentors who see the best in others and help them grow. They lead with warmth and vision.",traits:"Empathetic, persuasive, and highly socially aware. ENFJs are skilled communicators who bring people together. They are driven by a desire to make a positive impact.",work:"Collaborative and organized. ENFJs thrive in people-oriented roles and excel at building teams. They are natural motivators who create harmony and shared purpose.",strengths:"Exceptional people skills, natural leader and motivator, strong communication ability, reliable and conscientious, sees potential in others",weaknesses:"May neglect their own needs for others, can be overly involved or intrusive, struggles with criticism, may make decisions too quickly on behalf of others"},
-ENFP:{title:"The Campaigner",overview:"Enthusiastic, creative, and endlessly curious about people. ENFPs are free spirits who see life as a kaleidoscope of possibilities and connections.",traits:"Warm, imaginative, and spontaneous. ENFPs are energetic explorers of ideas and relationships. They are infectious optimists who inspire others with their passion.",work:"Flexible and people-centered. ENFPs need variety, creativity, and human interaction. They excel at brainstorming, networking, and starting new initiatives.",strengths:"Outstanding people skills and empathy, boundless creativity and curiosity, infectious enthusiasm, adaptable, excellent communicator",weaknesses:"Easily distracted by new ideas, struggles with routine and discipline, can overcommit, may be overly sensitive, prone to procrastination"},
-ISTJ:{title:"The Logistician",overview:"Practical, reliable, and thoroughly grounded. ISTJs are the backbone of organizations — steady, methodical, and unwavering in their commitment to duty.",traits:"Dependable, detail-oriented, and disciplined. ISTJs value tradition, order, and proven methods. They keep their word and expect the same from others.",work:"Structured and systematic. ISTJs excel at creating and following processes. They value clear expectations and take pride in completing tasks thoroughly and on time.",strengths:"Exceptional reliability and integrity, strong organizational skills, practical and realistic, patient and persistent, thorough and detail-oriented",weaknesses:"May resist change or new approaches, can be inflexible, may seem overly rigid or judgmental, struggles with abstract or ambiguous situations"},
-ISFJ:{title:"The Defender",overview:"Warm, dedicated, and quietly supportive. ISFJs are the unsung heroes who protect traditions, care for loved ones, and work tirelessly behind the scenes.",traits:"Kind, conscientious, and deeply loyal. ISFJs have a rich inner world and a strong desire to serve and protect. They notice what others need and quietly provide it.",work:"Methodical and service-oriented. ISFJs excel at supportive roles requiring attention to detail and human care. They prefer stable, cooperative environments.",strengths:"Deeply caring and supportive, highly reliable and thorough, strong practical skills, patient and loyal, excellent memory for details about people",weaknesses:"May suppress their own needs, can be overly self-critical, hesitant to embrace change, may avoid conflict or assertiveness"},
-ESTJ:{title:"The Executive",overview:"Efficient, decisive, and results-driven. ESTJs are natural administrators who bring order, structure, and accountability wherever they go.",traits:"Practical, assertive, and highly organized. ESTJs value hard work, tradition, and clear hierarchies. They lead by example and expect excellence.",work:"Structured and goal-oriented. ESTJs excel at managing people and processes. They create order from chaos and ensure things get done correctly and on time.",strengths:"Strong leadership and management skills, dependable and dedicated, clear and direct communicator, excellent at organizing people and resources, unwavering work ethic",weaknesses:"Can be inflexible and authoritarian, may overlook feelings, struggles with unconventional ideas, can be overly focused on rules"},
-ESFJ:{title:"The Consul",overview:"Warm, sociable, and conscientious. ESFJs are the caregivers of the community — attentive, generous, and deeply committed to the well-being of those around them.",traits:"Friendly, practical, and highly attuned to others' needs. ESFJs thrive on social harmony and take genuine pleasure in helping people. They are loyal to tradition and community.",work:"Cooperative and structured. ESFJs excel in people-facing roles where they can organize and support. They prefer harmonious, well-defined environments.",strengths:"Excellent interpersonal skills, highly organized and reliable, genuine care for others, strong sense of duty, creates warm, inclusive environments",weaknesses:"May seek external validation too much, can be overly sensitive, struggles with criticism, may be reluctant to innovate or change"},
-ISTP:{title:"The Virtuoso",overview:"Bold, hands-on, and naturally skilled. ISTPs are masters of tools and technology — quiet explorers who understand how things work through direct experience.",traits:"Practical, adaptable, and fiercely independent. ISTPs are calm in crises and excel at troubleshooting. They value freedom, action, and tangible results.",work:"Flexible and action-oriented. ISTPs work best with hands-on tasks and real-time problem solving. They dislike bureaucracy and prefer learning by doing.",strengths:"Exceptional hands-on problem solving, calm under pressure, adaptable and resourceful, independent and self-sufficient, keen observational skills",weaknesses:"May seem detached or insensitive, can be risk-prone or impulsive, struggles with long-term planning, may avoid emotional expression"},
-ISFP:{title:"The Adventurer",overview:"Gentle, artistic, and deeply in tune with the present moment. ISFPs are quiet explorers of beauty and experience who express themselves through action and art.",traits:"Sensitive, creative, and open-minded. ISFPs live by their own values and seek authentic experiences. They are warm but private, competitive but kind.",work:"Flexible and hands-on. ISFPs need creative freedom and tangible results. They excel at artistic, aesthetic, and service-oriented work done on their own terms.",strengths:"Strong aesthetic sense and creativity, deeply empathetic, adaptable and open-minded, lives with authenticity, excellent at appreciating the present moment",weaknesses:"May be overly sensitive or private, struggles with long-term planning, can be difficult to get to know, may avoid conflict and tough decisions"},
-ESTP:{title:"The Entrepreneur",overview:"Energetic, action-oriented, and thrillingly direct. ESTPs are risk-takers who live in the moment and seize opportunities with both hands.",traits:"Bold, practical, and sociable. ESTPs are natural negotiators who read situations and people quickly. They love excitement, variety, and tangible results.",work:"Dynamic and results-oriented. ESTPs thrive in fast-paced, high-stakes environments. They excel at sales, negotiation, and crisis management.",strengths:"Quick decision-making under pressure, bold and action-oriented, excellent people skills and charisma, highly adaptable, sees and seizes opportunities",weaknesses:"Can be impulsive and risk-prone, may overlook long-term consequences, struggles with abstract theory, may seem insensitive or blunt"},
-ESFP:{title:"The Entertainer",overview:"Lively, spontaneous, and irresistibly charming. ESFPs are the life of any gathering — warm, generous, and deeply attuned to the joy of the present moment.",traits:"Playful, sociable, and practical. ESFPs love people, new experiences, and making everyday life more fun. They are natural performers who brighten any room.",work:"People-centered and hands-on. ESFPs excel at roles involving direct interaction, variety, and immediate impact. They bring energy and enthusiasm to teams.",strengths:"Exceptional social skills and warmth, bold and optimistic, highly observant of people, adaptable and resourceful, brings energy and fun to groups",weaknesses:"Easily bored with routine, may avoid planning and long-term commitments, can be impulsive with resources, seeks attention and validation"},
+INTJ:{title_en:"The Architect",title_zh:"建筑师",
+ overview_en:"Strategic, analytical, and independent. INTJs are natural planners who see the world as a complex system to be understood and improved. They are driven by an inner vision and have a remarkable ability to focus deeply on their goals.",
+ overview_zh:"战略型、分析型、独立自主。INTJ是天生的规划者，将世界视为一个有待理解和改进的复杂系统。他们由内在愿景驱动，具有非凡的深度专注能力。",
+ traits_en:"Rational, decisive, visionary, and highly self-disciplined. INTJs trust logic over emotion and prefer to work independently on long-term projects. They value competence and intelligence in themselves and others.",
+ traits_zh:"理性、果断、富有远见、高度自律。INTJ相信逻辑胜过情感，更倾向于独立完成长期项目。他们重视自己和他人身上的能力和智慧。",
+ work_en:"Systematic and strategic. INTJs excel at creating long-term plans and executing them with precision. They prefer autonomy, dislike micromanagement, and thrive in environments that reward intellectual rigor.",
+ work_zh:"系统化、战略性。INTJ擅长制定长期计划并精确执行。他们追求自主权，厌恶微观管理，在奖励智力严谨的环境中茁壮成长。",
+ strengths_en:"Exceptional strategic thinking, strong analytical ability, unwavering determination, independent and self-motivated, able to see the big picture while managing details",
+ strengths_zh:"卓越的战略思维，强大的分析能力，坚定的决心，独立自驱，既能把握全局又能顾及细节",
+ weaknesses_en:"May come across as aloof or dismissive of emotions, can be overly critical, struggles with social small talk, may overlook others' need for emotional validation",
+ weaknesses_zh:"可能显得冷漠或不屑于情感交流，有时过于挑剔，不擅长社交闲聊，可能忽视他人的情感需求"},
+INTP:{title_en:"The Logician",title_zh:"逻辑学家",
+ overview_en:"Innovative, curious, and deeply analytical. INTPs are driven by an insatiable desire to understand how things work. They are natural philosophers and inventors who love exploring abstract concepts.",
+ overview_zh:"创新、好奇、热衷深度分析。INTP被一种不可抑制的求知欲驱动，渴望理解一切如何运作。他们天生是哲学家和发明家，热爱探索抽象概念。",
+ traits_en:"Logical, original, open-minded, and intellectually playful. INTPs enjoy deconstructing ideas and reconstructing them in novel ways. They value truth and precision above all else.",
+ traits_zh:"逻辑清晰、原创、开放且喜欢智力游戏。INTP乐于解构想法并以新颖的方式重构。他们将真理和精确性看得高于一切。",
+ work_en:"Flexible and idea-driven. INTPs work best when given intellectual freedom and minimal structure. They excel at solving complex theoretical problems but may struggle with routine tasks.",
+ work_zh:"灵活且以创意驱动。INTP在被给予智力自由和最少管控时表现最佳。他们擅长解决复杂的理论问题，但可能在例行任务上有困难。",
+ strengths_en:"Brilliant problem-solving ability, creative and original thinking, objective and fair-minded, deep curiosity, excellent at pattern recognition",
+ strengths_zh:"卓越的解决问题能力，创意和原创思维，客观公正，强烈的好奇心，出色地识别模式",
+ weaknesses_en:"Can overthink and get lost in analysis, may neglect practical details, struggles with deadlines and structure, can be socially withdrawn",
+ weaknesses_zh:"可能想太多陷入分析困境，可能忽略实际细节，与截止日期和规范抗争，有时会社交退缩"},
+ENTJ:{title_en:"The Commander",title_zh:"指挥官",
+ overview_en:"Bold, charismatic, and decisive. ENTJs are natural-born leaders who thrive on challenge and achievement. They have a clear vision of the future and the drive to make it happen.",
+ overview_zh:"大胆、有魅力、果断。ENTJ是天生的领导者，在挑战和成就中茁壮成长。他们对未来有清晰的愿景和将之实现的驱动力。",
+ traits_en:"Confident, strategic, and highly driven. ENTJs are assertive communicators who inspire others to action. They value efficiency, competence, and measurable results.",
+ traits_zh:"自信、有策略、充满驱动力。ENTJ是坚定自信的沟通者，激励他人采取行动。他们重视效率、能力和可量化的成果。",
+ work_en:"Goal-oriented and structured. ENTJs take charge, set ambitious targets, and mobilize teams to achieve them. They prefer fast-paced, competitive environments.",
+ work_zh:"以目标为导向、结构化。ENTJ主动掌控大局，设定高远目标，并动员团队去实现。他们偏好快节奏、有竞争力的环境。",
+ strengths_en:"Strong leadership and organizational skills, decisive and action-oriented, excellent strategic planner, inspiring communicator, resilient under pressure",
+ strengths_zh:"强大的领导和组织能力，果断且行动导向，出色的战略规划者，鼓舞人心的沟通者，抗压能力强",
+ weaknesses_en:"Can be domineering or impatient, may overlook emotions, tends to be overly critical of underperformance, may struggle with work-life balance",
+ weaknesses_zh:"可能强势霸道或缺乏耐心，可能忽略情感，对表现不佳者过于苛刻，难以保持工作与生活平衡"},
+ENTP:{title_en:"The Debater",title_zh:"辩论家",
+ overview_en:"Witty, curious, and endlessly creative. ENTPs are idea machines who thrive on intellectual challenge and lively debate. They see possibilities everywhere.",
+ overview_zh:"机智、好奇、创意无限。ENTP是创意机器，在智力挑战和激烈辩论中茁壮成长。他们眼中处处是可能性。",
+ traits_en:"Quick-thinking, charismatic, and adaptable. ENTPs enjoy challenging conventions and exploring new perspectives. They are energetic brainstormers who love starting new projects.",
+ traits_zh:"思维敏捷、有魅力、适应力强。ENTP乐于挑战常规、探索新视角。他们是充满活力的头脑风暴者，喜欢启动新项目。",
+ work_en:"Flexible and entrepreneurial. ENTPs work best in dynamic, stimulating environments. They excel at generating ideas and solving novel problems but may lose interest in execution.",
+ work_zh:"灵活且富有创业精神。ENTP在活力十足、充满刺激的环境中表现最佳。他们擅长产生创意和解决新问题，但可能对执行阶段失去兴趣。",
+ strengths_en:"Exceptional creativity, quick learner, excellent debater and communicator, adaptable and resourceful, sees opportunities others miss",
+ strengths_zh:"非凡的创造力，快速学习者，出色的辩手和沟通者，适应力强且足智多谋，能看到别人忽略的机会",
+ weaknesses_en:"Can be argumentative for its own sake, struggles with follow-through, easily bored with routine, may neglect practical constraints",
+ weaknesses_zh:"可能为了争论而争论，难以坚持到底，容易对常规感到无聊，可能忽视实际限制"},
+INFJ:{title_en:"The Advocate",title_zh:"提倡者",
+ overview_en:"Insightful, idealistic, and deeply compassionate. INFJs combine vision with empathy, driven by a desire to help others and make the world a better place.",
+ overview_zh:"有洞察力、理想主义、富有深厚的同理心。INFJ将远见与共情相结合，被帮助他人、让世界更美好的愿望所驱动。",
+ traits_en:"Intuitive, principled, and quietly determined. INFJs have a deep understanding of people and complex emotional dynamics. They are selective but intensely loyal.",
+ traits_zh:"直觉敏锐、有原则、内心坚定。INFJ对人和复杂的情感动态有深刻的理解。他们交友挑剔但极其忠诚。",
+ work_en:"Purpose-driven and organized. INFJs need meaningful work aligned with their values. They prefer calm, harmonious environments and excel at understanding people's needs.",
+ work_zh:"以使命感为驱动、有条不紊。INFJ需要有意义的、与自己价值观一致的工作。他们偏好平静和谐的环境，擅长理解他人的需求。",
+ strengths_en:"Deep empathy and insight into people, strong values and integrity, creative and visionary, persistent when committed, excellent written communicator",
+ strengths_zh:"深厚的同理心和洞察力，坚定的价值观和正直，富有创意和远见，一旦承诺就坚持不懈，出色的书面沟通能力",
+ weaknesses_en:"Prone to burnout from caring too much, can be overly sensitive to criticism, struggles with tough confrontations, may set unrealistic standards",
+ weaknesses_zh:"可能因过度关怀而精力耗竭，对批评过于敏感，难以应对强硬冲突，可能设定不切实际的标准"},
+INFP:{title_en:"The Mediator",title_zh:"调停者",
+ overview_en:"Idealistic, creative, and deeply value-driven. INFPs see the potential for beauty and goodness in everything. They are guided by a strong inner moral compass.",
+ overview_zh:"理想主义、富有创意、深受价值观驱动。INFP在一切事物中都能看到美与善的潜力。他们被强大的内在道德指南所引领。",
+ traits_en:"Compassionate, imaginative, and authentic. INFPs seek meaning and purpose in all they do. They are gentle souls with a fierce commitment to their principles.",
+ traits_zh:"富有同情心、充满想象力、真诚真实。INFP在所做的一切中寻求意义和目的。他们是温柔的，但对原则有着坚定执着的灵魂。",
+ work_en:"Flexible and inspiration-driven. INFPs need creative freedom and work that aligns with their values. They excel at writing, counseling, and creative pursuits.",
+ work_zh:"灵活且受灵感驱动。INFP需要创造自由和符合自己价值观的工作。他们擅长写作、咨询和创意类工作。",
+ strengths_en:"Strong empathy and emotional intelligence, deep creativity and imagination, unwavering integrity, open-minded, excellent listener",
+ strengths_zh:"强烈的同理心和高情商，深刻的创造力和想象力，不动摇的正直，开放包容的心态，出色的倾听者",
+ weaknesses_en:"Can be overly idealistic, takes criticism personally, struggles with practical or mundane tasks, may avoid conflict to a fault",
+ weaknesses_zh:"可能过于理想化，容易对批评耿耿于怀，与琐碎实际的任务斗争，可能过度回避冲突"},
+ENFJ:{title_en:"The Protagonist",title_zh:"主人公",
+ overview_en:"Charismatic, inspiring, and deeply caring. ENFJs are natural mentors who see the best in others and help them grow. They lead with warmth and vision.",
+ overview_zh:"有魅力、鼓舞人心、深切关怀他人。ENFJ是天生的导师，能看到他人最好的特质并帮助其成长。他们以温暖和远见引领。",
+ traits_en:"Empathetic, persuasive, and highly socially aware. ENFJs are skilled communicators who bring people together. They are driven by a desire to make a positive impact.",
+ traits_zh:"善解人意、有说服力、社交意识强。ENFJ是善于凝聚人心的沟通高手。他们被创造积极影响的愿望所驱动。",
+ work_en:"Collaborative and organized. ENFJs thrive in people-oriented roles and excel at building teams. They are natural motivators who create harmony and shared purpose.",
+ work_zh:"善于合作且有条理。ENFJ在以人为主的角色中茁壮成长，擅长团队建设。他们是天生的激励者，创造和谐与共同目标。",
+ strengths_en:"Exceptional people skills, natural leader and motivator, strong communication ability, reliable and conscientious, sees potential in others",
+ strengths_zh:"出色的人际交往能力，天生的领导者和激励者，沟通能力极强，可靠且认真负责，能看到他人的潜力",
+ weaknesses_en:"May neglect their own needs for others, can be overly involved or intrusive, struggles with criticism, may make decisions too quickly on behalf of others",
+ weaknesses_zh:"可能为他人而忽略自己，可能过度干预或冒犯他人，面对批评有困难，可能代表别人做决定太快"},
+ENFP:{title_en:"The Campaigner",title_zh:"竞选者",
+ overview_en:"Enthusiastic, creative, and endlessly curious about people. ENFPs are free spirits who see life as a kaleidoscope of possibilities and connections.",
+ overview_zh:"热情、有创意、对人充满无尽好奇。ENFP是自由的灵魂，将生活视为充满了各种可能和联系的万花筒。",
+ traits_en:"Warm, imaginative, and spontaneous. ENFPs are energetic explorers of ideas and relationships. They are infectious optimists who inspire others with their passion.",
+ traits_zh:"温暖、富有想象力、随心随性。ENFP是创意和人际关系的活力探索者。他们是富有感染力的乐观主义者，用自己的激情鼓舞他人。",
+ work_en:"Flexible and people-centered. ENFPs need variety, creativity, and human interaction. They excel at brainstorming, networking, and starting new initiatives.",
+ work_zh:"灵活且以人为本。ENFP需要多样性、创造力和人际互动。他们擅长头脑风暴、社交和启动新项目。",
+ strengths_en:"Outstanding people skills and empathy, boundless creativity and curiosity, infectious enthusiasm, adaptable, excellent communicator",
+ strengths_zh:"杰出的人际交往能力和同理心，无限的创造力和好奇心，富有感染力的热情，适应力强，优秀的沟通者",
+ weaknesses_en:"Easily distracted by new ideas, struggles with routine and discipline, can overcommit, may be overly sensitive, prone to procrastination",
+ weaknesses_zh:"容易被新想法分散注意力，与日常习惯和纪律抗争，可能过度承诺，有时过于敏感，容易拖延"},
+ISTJ:{title_en:"The Logistician",title_zh:"物流师",
+ overview_en:"Practical, reliable, and thoroughly grounded. ISTJs are the backbone of organizations — steady, methodical, and unwavering in their commitment to duty.",
+ overview_zh:"务实、可靠、脚踏实地。ISTJ是组织的支柱——稳定、有条不紊，对职责的承诺毫不动摇。",
+ traits_en:"Dependable, detail-oriented, and disciplined. ISTJs value tradition, order, and proven methods. They keep their word and expect the same from others.",
+ traits_zh:"可靠、注重细节、有纪律。ISTJ重视传统、秩序和经过验证的方法。他们信守承诺，也期望别人如此。",
+ work_en:"Structured and systematic. ISTJs excel at creating and following processes. They value clear expectations and take pride in completing tasks thoroughly and on time.",
+ work_zh:"结构化、系统化。ISTJ擅长建立和遵循流程。他们看重清晰的期望，并为彻底按时完成任务而感到自豪。",
+ strengths_en:"Exceptional reliability and integrity, strong organizational skills, practical and realistic, patient and persistent, thorough and detail-oriented",
+ strengths_zh:"超强的可靠性和正直，卓越的组织能力，务实且现实，耐心坚持，细致入微",
+ weaknesses_en:"May resist change or new approaches, can be inflexible, may seem overly rigid or judgmental, struggles with abstract or ambiguous situations",
+ weaknesses_zh:"可能抗拒变化或新方法，有时较不灵活，可能显得过于死板或爱评判，与抽象模糊的情境做斗争"},
+ISFJ:{title_en:"The Defender",title_zh:"守卫者",
+ overview_en:"Warm, dedicated, and quietly supportive. ISFJs are the unsung heroes who protect traditions, care for loved ones, and work tirelessly behind the scenes.",
+ overview_zh:"温暖、敬业、默默支持。ISFJ是无名英雄，守护传统、关爱身边的人、在幕后不知疲倦地工作。",
+ traits_en:"Kind, conscientious, and deeply loyal. ISFJs have a rich inner world and a strong desire to serve and protect. They notice what others need and quietly provide it.",
+ traits_zh:"善良、认真、无比忠诚。ISFJ拥有丰富的内心世界和强烈的服务与保护欲望。他们能注意到别人需要什么并默默提供。",
+ work_en:"Methodical and service-oriented. ISFJs excel at supportive roles requiring attention to detail and human care. They prefer stable, cooperative environments.",
+ work_zh:"有条不紊且以服务为导向。ISFJ擅长需要细致和人文关怀的支持性角色。他们更喜欢稳定、合作的环境。",
+ strengths_en:"Deeply caring and supportive, highly reliable and thorough, strong practical skills, patient and loyal, excellent memory for details about people",
+ strengths_zh:"深切关怀和高度支持，可靠全面，实践能力强，耐心忠诚，对人的细节记忆力惊人",
+ weaknesses_en:"May suppress their own needs, can be overly self-critical, hesitant to embrace change, may avoid conflict or assertiveness",
+ weaknesses_zh:"可能压抑自己的需求，可能过于自我批评，不太愿意改变，可能回避冲突或不敢表达主见"},
+ESTJ:{title_en:"The Executive",title_zh:"总经理",
+ overview_en:"Efficient, decisive, and results-driven. ESTJs are natural administrators who bring order, structure, and accountability wherever they go.",
+ overview_zh:"高效、果断、结果导向。ESTJ是天生的管理者，无论走到哪里都能带来秩序、规范和责任感。",
+ traits_en:"Practical, assertive, and highly organized. ESTJs value hard work, tradition, and clear hierarchies. They lead by example and expect excellence.",
+ traits_zh:"务实、有主见、极度有条理。ESTJ重视努力工作、传统和明确的层级关系。他们以身作则，追求卓越。",
+ work_en:"Structured and goal-oriented. ESTJs excel at managing people and processes. They create order from chaos and ensure things get done correctly and on time.",
+ work_zh:"结构化且以目标为导向。ESTJ擅长管理人和流程。他们从混乱中建立秩序，确保事情正确准时完成。",
+ strengths_en:"Strong leadership and management skills, dependable and dedicated, clear and direct communicator, excellent at organizing people and resources, unwavering work ethic",
+ strengths_zh:"强大的领导和管理技能，可靠且有奉献精神，清晰直接的沟通者，善于组织人员和资源，坚定的职业道德",
+ weaknesses_en:"Can be inflexible and authoritarian, may overlook feelings, struggles with unconventional ideas, can be overly focused on rules",
+ weaknesses_zh:"可能固执且专制，可能忽略他人感受，与非常规想法斗争，可能过于关注规则"},
+ESFJ:{title_en:"The Consul",title_zh:"执政官",
+ overview_en:"Warm, sociable, and conscientious. ESFJs are the caregivers of the community — attentive, generous, and deeply committed to the well-being of those around them.",
+ overview_zh:"温暖、善交际、认真负责。ESFJ是社区的关怀者——细心、慷慨，深切关心周围人的福祉。",
+ traits_en:"Friendly, practical, and highly attuned to others' needs. ESFJs thrive on social harmony and take genuine pleasure in helping people. They are loyal to tradition and community.",
+ traits_zh:"友好、务实、能敏锐感知他人需求。ESFJ在社交和谐中成长，享受真正帮助他人的快乐。他们对传统和社区保持忠诚。",
+ work_en:"Cooperative and structured. ESFJs excel in people-facing roles where they can organize and support. They prefer harmonious, well-defined environments.",
+ work_zh:"善于合作且有条理。ESFJ擅长与人打交道的角色，能够组织和支持他人。他们喜欢和谐、明确的职场环境。",
+ strengths_en:"Excellent interpersonal skills, highly organized and reliable, genuine care for others, strong sense of duty, creates warm, inclusive environments",
+ strengths_zh:"出色的人际交往能力，高度有条理和可靠，真挚的关怀，强烈的责任感，营造温馨包容的环境",
+ weaknesses_en:"May seek external validation too much, can be overly sensitive, struggles with criticism, may be reluctant to innovate or change",
+ weaknesses_zh:"可能过于依赖外部认可，有时过于敏感，对批评不易接受，可能不愿创新或改变"},
+ISTP:{title_en:"The Virtuoso",title_zh:"鉴赏家",
+ overview_en:"Bold, hands-on, and naturally skilled. ISTPs are masters of tools and technology — quiet explorers who understand how things work through direct experience.",
+ overview_zh:"大胆、动手能力强、天生技术精湛。ISTP是工具和技术的大师——安静的探索者，通过直接体验理解事物的运作方式。",
+ traits_en:"Practical, adaptable, and fiercely independent. ISTPs are calm in crises and excel at troubleshooting. They value freedom, action, and tangible results.",
+ traits_zh:"务实、适应力强、极端独立。ISTP在危机中保持冷静，擅长解决问题。他们重视自由、行动和切实的成果。",
+ work_en:"Flexible and action-oriented. ISTPs work best with hands-on tasks and real-time problem solving. They dislike bureaucracy and prefer learning by doing.",
+ work_zh:"灵活且行动导向。ISTP在做实际动手任务和实时解决问题中表现最佳。他们不喜欢官僚主义，更愿意在做中学。",
+ strengths_en:"Exceptional hands-on problem solving, calm under pressure, adaptable and resourceful, independent and self-sufficient, keen observational skills",
+ strengths_zh:"出色的动手解决问题能力，压力下保持冷静，适应力强且足智多谋，独立自足，敏锐的观察力",
+ weaknesses_en:"May seem detached or insensitive, can be risk-prone or impulsive, struggles with long-term planning, may avoid emotional expression",
+ weaknesses_zh:"可能显得疏离或不敏感，有时冒险或冲动，与长期规划做斗争，可能回避情感表达"},
+ISFP:{title_en:"The Adventurer",title_zh:"探险家",
+ overview_en:"Gentle, artistic, and deeply in tune with the present moment. ISFPs are quiet explorers of beauty and experience who express themselves through action and art.",
+ overview_zh:"温和、艺术化、深深沉浸于当下时刻。ISFP是美和体验的安静探索者，通过行动和艺术来表达自己。",
+ traits_en:"Sensitive, creative, and open-minded. ISFPs live by their own values and seek authentic experiences. They are warm but private, competitive but kind.",
+ traits_zh:"敏感、有创造力、心态开放。ISFP按照自己的价值观生活，追求真实的体验。他们温暖但私密，有竞争心但善良。",
+ work_en:"Flexible and hands-on. ISFPs need creative freedom and tangible results. They excel at artistic, aesthetic, and service-oriented work done on their own terms.",
+ work_zh:"灵活、动手操作。ISFP需要创造自由和可见的成果。他们擅长以自己方式完成的艺术性、审美性和服务导向的工作。",
+ strengths_en:"Strong aesthetic sense and creativity, deeply empathetic, adaptable and open-minded, lives with authenticity, excellent at appreciating the present moment",
+ strengths_zh:"强烈的审美感和创造力，深度有同理心，适应力强且心态开放，活出真实的自己，擅长享受当下",
+ weaknesses_en:"May be overly sensitive or private, struggles with long-term planning, can be difficult to get to know, may avoid conflict and tough decisions",
+ weaknesses_zh:"可能过于敏感或封闭，与长期计划做斗争，难以被了解，可能回避冲突和艰难决策"},
+ESTP:{title_en:"The Entrepreneur",title_zh:"企业家",
+ overview_en:"Energetic, action-oriented, and thrillingly direct. ESTPs are risk-takers who live in the moment and seize opportunities with both hands.",
+ overview_zh:"精力充沛、行动导向、直截了当。ESTP是活在当下、双手抓住机会的冒险者。",
+ traits_en:"Bold, practical, and sociable. ESTPs are natural negotiators who read situations and people quickly. They love excitement, variety, and tangible results.",
+ traits_zh:"大胆、务实、善于社交。ESTP是天生的谈判者，能快速读懂情境和人。他们热爱刺激、多样性和实质成果。",
+ work_en:"Dynamic and results-oriented. ESTPs thrive in fast-paced, high-stakes environments. They excel at sales, negotiation, and crisis management.",
+ work_zh:"活力四射、结果导向。ESTP在快节奏、高风险的环境中游刃有余。他们擅长销售、谈判和危机管理。",
+ strengths_en:"Quick decision-making under pressure, bold and action-oriented, excellent people skills and charisma, highly adaptable, sees and seizes opportunities",
+ strengths_zh:"压力下快速决策，大胆行动导向，出色的人际和魅力，高度适应，敏锐捕捉机会",
+ weaknesses_en:"Can be impulsive and risk-prone, may overlook long-term consequences, struggles with abstract theory, may seem insensitive or blunt",
+ weaknesses_zh:"可能冲动且偏冒险，可能忽视长期后果，与抽象理论做斗争，可能显得迟钝或直白"},
+ESFP:{title_en:"The Entertainer",title_zh:"表演者",
+ overview_en:"Lively, spontaneous, and irresistibly charming. ESFPs are the life of any gathering — warm, generous, and deeply attuned to the joy of the present moment.",
+ overview_zh:"活泼、随性、魅力无可抗拒。ESFP是任何聚会的焦点——温暖、慷慨、完全沉浸于当下。",
+ traits_en:"Playful, sociable, and practical. ESFPs love people, new experiences, and making everyday life more fun. They are natural performers who brighten any room.",
+ traits_zh:"好玩、善交际、务实。ESFP喜欢与人相处、新鲜体验、让日常生活更有趣。他们是天生的表演者，能点亮任何场合。",
+ work_en:"People-centered and hands-on. ESFPs excel at roles involving direct interaction, variety, and immediate impact. They bring energy and enthusiasm to teams.",
+ work_zh:"以人为本、动手操作。ESFP擅长需要直接互动、多样化和即时见效的角色。他们为团队带来能量和热情。",
+ strengths_en:"Exceptional social skills and warmth, bold and optimistic, highly observant of people, adaptable and resourceful, brings energy and fun to groups",
+ strengths_zh:"出色的社交能力和温暖，大胆乐观，对人的观察力极强，适应性强、足智多谋，为群体带来能量和乐趣",
+ weaknesses_en:"Easily bored with routine, may avoid planning and long-term commitments, can be impulsive with resources, seeks attention and validation",
+ weaknesses_zh:"容易对常规感到厌倦，可能回避规划和长期承诺，在资源使用上较冲动，追求关注和认可"},
 };
 
 // ═══════════════════════════════════════════
@@ -291,15 +885,26 @@ function selectCount(el) {
 
 function startTest() {
     questions = getQuestions(questionCount);
-    document.getElementById('test-label').textContent = questionCount + ' Questions';
+    document.getElementById('test-label').textContent = questionCount + ' ' + (lang==='zh'?'题':'Questions');
     document.getElementById('total-count').textContent = questionCount;
+    updateUIText();
     renderQuestions();
     showPage('page-test');
     updateProgress();
 }
 
 function goLanding() {
+    updateUIText();
     showPage('page-landing');
+}
+
+function updateUIText() {
+    document.getElementById('back-link').textContent = t('backLink');
+    document.getElementById('answered-label').textContent = t('answeredLabel');
+    document.getElementById('submit-text').textContent = t('submitText');
+    document.getElementById('footer-test').textContent = t('footerTest');
+    document.getElementById('btn-retake').textContent = t('btnRetake');
+    document.getElementById('btn-download').textContent = t('btnDownload');
 }
 
 // ═══════════════════════════════════════════
@@ -324,17 +929,17 @@ function renderQuestions() {
     container.innerHTML = questions.map((q, i) => `
         <div class="question-card" id="q-${q.id}">
             <span class="q-num">Q${i+1} / ${questionCount}</span>
-            <div class="q-text">${q.text}</div>
+            <div class="q-text">${lang==='zh' ? q.text_zh : q.text_en}</div>
             <div class="options">
                 <label class="option" id="opt-a-${q.id}" onclick="selectOption(${q.id},'a',this)">
                     <input type="radio" name="q${q.id}" value="a" required>
                     <span class="letter">A</span>
-                    <span>${q.optA}</span>
+                    <span>${lang==='zh' ? q.optA_zh : q.optA_en}</span>
                 </label>
                 <label class="option" id="opt-b-${q.id}" onclick="selectOption(${q.id},'b',this)">
                     <input type="radio" name="q${q.id}" value="b" required>
                     <span class="letter">B</span>
-                    <span>${q.optB}</span>
+                    <span>${lang==='zh' ? q.optB_zh : q.optB_en}</span>
                 </label>
             </div>
         </div>
@@ -366,12 +971,10 @@ function scoreAnswers() {
         const radio = document.querySelector('input[name="q' + q.id + '"]:checked');
         if (radio) answers[q.id] = {val: radio.value, swap: q.swap};
     });
-    // Count toward pole1 (E,S,T,J) and pole2 (I,N,F,P)
     const dims = {EI:{p1:0,p2:0}, SN:{p1:0,p2:0}, TF:{p1:0,p2:0}, JP:{p1:0,p2:0}};
     questions.forEach(q => {
         const a = answers[q.id];
         if (!a) return;
-        // If not swapped: a→p1, b→p2. If swapped: a→p2, b→p1
         const isP1 = (a.val === 'a' && !a.swap) || (a.val === 'b' && a.swap);
         if (isP1) dims[q.dim].p1++;
         else dims[q.dim].p2++;
@@ -405,163 +1008,124 @@ document.getElementById('test-form').addEventListener('submit', function(e) {
 
     // Header
     document.getElementById('result-type').textContent = mbtiType;
-    document.getElementById('result-title').textContent = 'The ' + p.title;
+    document.getElementById('result-title').textContent = lang==='zh' ?
+        ('「' + p.title_zh + '」') : ('The ' + p.title_en);
+    document.getElementById('result-type-label').textContent = t('resultTypeLabel');
+    document.getElementById('dim-heading').textContent = t('dimHeading');
+    document.getElementById('btn-retake').textContent = t('btnRetake');
+    document.getElementById('btn-download').textContent = t('btnDownload');
+    document.getElementById('result-disclaimer').textContent = t('disclaimer');
+    document.getElementById('footer-result').textContent = t('footerResult');
 
     // Dimension bars
-    const dimDescs = {
-        EI: "Extraversion vs Introversion", SN: "Sensing vs Intuition",
-        TF: "Thinking vs Feeling", JP: "Judging vs Perceiving"
-    };
-    const dimMeanings = {
-        EI: "Where you focus your attention and get energy",
-        SN: "How you take in information and perceive the world",
-        TF: "How you make decisions and evaluate information",
-        JP: "How you approach structure and the outer world"
-    };
     const dimOrder = [['EI','E','I'],['SN','S','N'],['TF','T','F'],['JP','J','P']];
     let barsHTML = '';
     dimOrder.forEach(([dim, a, b]) => {
         const pctA = scores[dim][a], pctB = scores[dim][b];
         barsHTML += `
         <div class="dim-item">
-            <div class="dim-label"><span>${dimDescs[dim]}</span><span>${a} ${pctA}% — ${pctB}% ${b}</span></div>
+            <div class="dim-label"><span>${t('dimDescs')[dim]}</span><span>${a} ${pctA}% — ${pctB}% ${b}</span></div>
             <div class="dim-bar-wrap">
                 <div class="dim-bar-left" style="width:${pctA}%;${pctA===0?'border-radius:0':''}">${pctA>=15?a+' '+pctA+'%':''}</div>
                 <div class="dim-bar-right" style="width:${pctB}%;${pctB===0?'border-radius:0':''}">${pctB>=15?pctB+'% '+b:''}</div>
             </div>
-            <div class="dim-desc">${dimMeanings[dim]}</div>
+            <div class="dim-desc">${t('dimMeanings')[dim]}</div>
         </div>`;
     });
     document.getElementById('dim-bars').innerHTML = barsHTML;
 
-    // Evaluation sections
-    document.getElementById('result-overview').innerHTML = '<h3>Overview</h3><p>' + p.overview + '</p>';
-    document.getElementById('result-traits').innerHTML = '<h3>Key Traits</h3><p>' + p.traits + '</p>';
-    document.getElementById('result-work').innerHTML = '<h3>Work Style & Career</h3><p>' + p.work + '</p>';
+    // Evaluation
+    document.getElementById('result-overview').innerHTML = '<h3>'+(lang==='zh'?'概述':'Overview')+'</h3><p>'+(lang==='zh'?p.overview_zh:p.overview_en)+'</p>';
+    document.getElementById('result-traits').innerHTML = '<h3>'+(lang==='zh'?'核心特质':'Key Traits')+'</h3><p>'+(lang==='zh'?p.traits_zh:p.traits_en)+'</p>';
+    document.getElementById('result-work').innerHTML = '<h3>'+(lang==='zh'?'工作风格与职业':'Work Style & Career')+'</h3><p>'+(lang==='zh'?p.work_zh:p.work_en)+'</p>';
 
-    // Strengths & Weaknesses
-    function buildList(str) {
-        return str.split(',').map(s => { s = s.trim(); return s ? '<li>' + s.replace(/\.$/,'') + '</li>' : ''; }).join('');
-    }
+    const strengths = (lang==='zh'?p.strengths_zh:p.strengths_en).split(',').map(s => { s=s.trim().replace(/\.$/,''); return s?'<li>'+s+'</li>':''; }).join('');
+    const weaknesses = (lang==='zh'?p.weaknesses_zh:p.weaknesses_en).split(',').map(s => { s=s.trim().replace(/\.$/,''); return s?'<li>'+s+'</li>':''; }).join('');
+
     document.getElementById('result-sw').innerHTML = `
-        <div class="sw-card strengths"><h4>Strengths</h4><ul>${buildList(p.strengths)}</ul></div>
-        <div class="sw-card weaknesses"><h4>Areas for Growth</h4><ul>${buildList(p.weaknesses)}</ul></div>`;
+        <div class="sw-card strengths"><h4>${t('strengthsLabel')}</h4><ul>${strengths}</ul></div>
+        <div class="sw-card weaknesses"><h4>${t('weaknessesLabel')}</h4><ul>${weaknesses}</ul></div>`;
 
     showPage('page-result');
 
-    // Store data for Word download
+    // Store for PDF
     document.getElementById('page-result').dataset.mbtiType = mbtiType;
     document.getElementById('page-result').dataset.scores = JSON.stringify(scores);
 });
 
 // ═══════════════════════════════════════════
-// WORD DOWNLOAD (pure client-side using docx library)
+// PDF DOWNLOAD (html2pdf)
 // ═══════════════════════════════════════════
-async function downloadWord() {
+async function downloadPDF() {
     const mbtiType = document.getElementById('page-result').dataset.mbtiType;
     const scores = JSON.parse(document.getElementById('page-result').dataset.scores);
     const p = PERSONALITY[mbtiType];
     const btn = document.getElementById('btn-download');
-    btn.textContent = 'Generating...';
+    btn.textContent = lang==='zh'?'生成中...':'Generating...';
     btn.disabled = true;
 
     try {
-        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-                HeadingLevel, AlignmentType, WidthType, BorderStyle } = docx;
+        // Fill PDF template
+        document.getElementById('pdf-report-title').textContent = t('pdfReportTitle');
+        document.getElementById('pdf-report-subtitle').textContent = t('pdfReportSub');
+        document.getElementById('pdf-type').textContent = mbtiType;
+        document.getElementById('pdf-type-name').textContent = (lang==='zh' ? '「' + p.title_zh + '」' : 'The ' + p.title_en);
+        document.getElementById('pdf-dim-heading').textContent = t('pdfDimHeading');
 
-        const dimLabels = {EI:['E','I','Extraversion vs Introversion','Where you focus your attention and get energy'],
-                           SN:['S','N','Sensing vs Intuition','How you take in information and perceive the world'],
-                           TF:['T','F','Thinking vs Feeling','How you make decisions and evaluate information'],
-                           JP:['J','P','Judging vs Perceiving','How you approach structure and the outer world']};
-
-        const children = [];
-
-        // Title
-        children.push(new Paragraph({ spacing: { after: 400 },
-            children: [new TextRun({ text: 'MBTI Personality Report', bold: true, size: 44, color: '003366' })],
-            alignment: AlignmentType.CENTER }));
-        children.push(new Paragraph({ spacing: { after: 400 },
-            children: [new TextRun({ text: 'Myers-Briggs Type Indicator — Personal Assessment', size: 24, color: '888888', italics: true })],
-            alignment: AlignmentType.CENTER }));
-
-        // Type result
-        children.push(new Paragraph({ heading: HeadingLevel.HEADING_1, spacing: { after: 200 },
-            children: [new TextRun({ text: 'Your Personality Type' })] }));
-        children.push(new Paragraph({ spacing: { after: 100 }, alignment: AlignmentType.CENTER,
-            children: [new TextRun({ text: mbtiType, bold: true, size: 56, color: '003366' })] }));
-        children.push(new Paragraph({ spacing: { after: 400 }, alignment: AlignmentType.CENTER,
-            children: [new TextRun({ text: 'The ' + p.title, italics: true, size: 28, color: '888888' })] }));
-
-        // Dimension Breakdown
-        children.push(new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 300, after: 200 },
-            children: [new TextRun({ text: 'Dimension Breakdown' })] }));
-
-        for (const [dim, labels] of Object.entries(dimLabels)) {
-            const [poleA, poleB, desc, meaning] = labels;
-            const pctA = scores[dim][poleA], pctB = scores[dim][poleB];
-            const barA = '█'.repeat(Math.round(pctA / 4));
-            const barB = '█'.repeat(Math.round(pctB / 4));
-
-            children.push(new Paragraph({ spacing: { before: 200 },
-                children: [new TextRun({ text: desc, bold: true, size: 22 })] }));
-            children.push(new Paragraph({
-                children: [new TextRun({ text: poleA + ': ' + barA + ' ' + pctA + '%    ' + poleB + ': ' + barB + ' ' + pctB + '%', size: 20 })] }));
-            children.push(new Paragraph({ spacing: { after: 100 },
-                children: [new TextRun({ text: meaning, italics: true, size: 18, color: '888888' })] }));
-        }
-
-        // Divider
-        children.push(new Paragraph({ spacing: { before: 300, after: 300 },
-            children: [new TextRun({ text: '─'.repeat(60), color: 'cccccc' })] }));
-
-        // Evaluation
-        children.push(new Paragraph({ heading: HeadingLevel.HEADING_1, spacing: { after: 200 },
-            children: [new TextRun({ text: 'Personality Evaluation' })] }));
-
-        for (const [title, content] of [['Overview', p.overview], ['Key Traits', p.traits], ['Work Style & Career', p.work]]) {
-            children.push(new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { after: 100 },
-                children: [new TextRun({ text: title })] }));
-            children.push(new Paragraph({ spacing: { after: 200 },
-                children: [new TextRun({ text: content, size: 22 })] }));
-        }
-
-        // Strengths
-        children.push(new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { after: 100 },
-            children: [new TextRun({ text: 'Strengths' })] }));
-        p.strengths.split(',').forEach(s => {
-            s = s.trim().replace(/\.$/, '');
-            if (s) children.push(new Paragraph({ spacing: { after: 60 }, bullet: { level: 0 },
-                children: [new TextRun({ text: s, size: 21 })] }));
+        const dimOrder = [['EI','E','I'],['SN','S','N'],['TF','T','F'],['JP','J','P']];
+        let dimHTML = '';
+        dimOrder.forEach(([dim, a, b]) => {
+            const pctA = scores[dim][a], pctB = scores[dim][b];
+            dimHTML += `<div class="pdf-bar-row">
+                <div class="pdf-bar-label">${t('dimDescs')[dim]}: ${a} ${pctA}% — ${pctB}% ${b}</div>
+                <div class="pdf-bar-box">
+                    <div class="pdf-bar-left" style="width:${pctA}%">${pctA>=12?a+' '+pctA+'%':''}</div>
+                    <div class="pdf-bar-right" style="width:${pctB}%">${pctB>=12?pctB+'% '+b:''}</div>
+                </div>
+                <div class="pdf-bar-desc">${t('dimMeanings')[dim]}</div>
+            </div>`;
         });
+        document.getElementById('pdf-dims').innerHTML = dimHTML;
 
-        // Weaknesses
-        children.push(new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { after: 100, before: 200 },
-            children: [new TextRun({ text: 'Areas for Growth' })] }));
-        p.weaknesses.split(',').forEach(s => {
-            s = s.trim().replace(/\.$/, '');
-            if (s) children.push(new Paragraph({ spacing: { after: 60 }, bullet: { level: 0 },
-                children: [new TextRun({ text: s, size: 21 })] }));
-        });
+        document.getElementById('pdf-overview-heading').textContent = t('pdfOverviewHeading');
+        document.getElementById('pdf-overview').textContent = lang==='zh'?p.overview_zh:p.overview_en;
+        document.getElementById('pdf-traits-heading').textContent = t('pdfTraitsHeading');
+        document.getElementById('pdf-traits').textContent = lang==='zh'?p.traits_zh:p.traits_en;
+        document.getElementById('pdf-work-heading').textContent = t('pdfWorkHeading');
+        document.getElementById('pdf-work').textContent = lang==='zh'?p.work_zh:p.work_en;
+        document.getElementById('pdf-strengths-heading').textContent = t('pdfStrengthsHeading');
+        document.getElementById('pdf-weaknesses-heading').textContent = t('pdfWeaknessesHeading');
 
-        // Footer
-        children.push(new Paragraph({ spacing: { before: 500 },
-            children: [new TextRun({ text: 'This report is generated for informational and educational purposes. MBTI is a personality indicator, not a diagnostic tool. Personality is complex and cannot be fully captured by any single assessment.', size: 16, color: 'aaaaaa', italics: true })] }));
+        const strengths = (lang==='zh'?p.strengths_zh:p.strengths_en).split(',').map(s => { s=s.trim().replace(/\.$/,''); return s?'<li>'+s+'</li>':''; }).join('');
+        const weaknesses = (lang==='zh'?p.weaknesses_zh:p.weaknesses_en).split(',').map(s => { s=s.trim().replace(/\.$/,''); return s?'<li>'+s+'</li>':''; }).join('');
+        document.getElementById('pdf-strengths').innerHTML = strengths;
+        document.getElementById('pdf-weaknesses').innerHTML = weaknesses;
+        document.getElementById('pdf-footer').textContent = t('pdfFooter');
 
-        const doc = new Document({ sections: [{ children }] });
-        const blob = await Packer.toBlob(doc);
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'MBTI_Report_' + mbtiType + '.docx';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        btn.textContent = 'Download Word Report';
+        // Show pdf-content temporarily for rendering
+        const pdfEl = document.getElementById('pdf-content');
+        pdfEl.style.display = 'block';
+        pdfEl.style.position = 'absolute';
+        pdfEl.style.left = '-9999px';
+        pdfEl.style.width = '700px';
+
+        await html2pdf().set({
+            margin: [10, 10, 10, 10],
+            filename: 'MBTI_Report_' + mbtiType + '.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        }).from(pdfEl).save();
+
+        pdfEl.style.display = 'none';
+        pdfEl.style.position = '';
+        pdfEl.style.left = '';
+        pdfEl.style.width = '';
+        btn.textContent = t('btnDownload');
         btn.disabled = false;
     } catch (e) {
         console.error(e);
-        btn.textContent = 'Download failed — retry';
+        btn.textContent = lang==='zh'?'下载失败 — 重试':'Download failed — retry';
         btn.disabled = false;
     }
 }
@@ -570,6 +1134,7 @@ async function downloadWord() {
 // INIT
 // ═══════════════════════════════════════════
 showPage('page-landing');
+setLang('en');
 </script>
 </body>
 </html>
