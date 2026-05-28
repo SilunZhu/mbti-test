@@ -91,8 +91,8 @@ body { font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; backgr
 .disclaimer { text-align:center; font-size:11px; color:#b2bec3; margin-top:32px; line-height:1.6; }
 .footer { text-align:center; padding:32px 0; color:var(--text-light); font-size:12px; }
 
-/* PDF content — hidden on screen, used for html2pdf render */
-#pdf-content { display:none; }
+/* PDF content — invisible but kept in flow so html2canvas can render it */
+#pdf-content { position:fixed; top:0; left:0; z-index:-9999; opacity:0; pointer-events:none; width:700px; }
 
 .nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
 .back-link { color:var(--primary); text-decoration:none; font-size:14px; cursor:pointer; }
@@ -1102,25 +1102,16 @@ async function downloadPDF() {
         document.getElementById('pdf-weaknesses').innerHTML = weaknesses;
         document.getElementById('pdf-footer').textContent = t('pdfFooter');
 
-        // Show pdf-content temporarily for rendering
         const pdfEl = document.getElementById('pdf-content');
-        pdfEl.style.display = 'block';
-        pdfEl.style.position = 'absolute';
-        pdfEl.style.left = '-9999px';
-        pdfEl.style.width = '700px';
 
         await html2pdf().set({
             margin: [10, 10, 10, 10],
             filename: 'MBTI_Report_' + mbtiType + '.pdf',
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
+            html2canvas: { scale: 2, useCORS: true, logging: false },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         }).from(pdfEl).save();
 
-        pdfEl.style.display = 'none';
-        pdfEl.style.position = '';
-        pdfEl.style.left = '';
-        pdfEl.style.width = '';
         btn.textContent = t('btnDownload');
         btn.disabled = false;
     } catch (e) {
