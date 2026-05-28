@@ -91,8 +91,6 @@ body { font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; backgr
 .disclaimer { text-align:center; font-size:11px; color:#b2bec3; margin-top:32px; line-height:1.6; }
 .footer { text-align:center; padding:32px 0; color:var(--text-light); font-size:12px; }
 
-/* PDF content — invisible but kept in flow so html2canvas can render it */
-#pdf-content { position:fixed; top:0; left:0; z-index:-9999; opacity:0; pointer-events:none; width:700px; }
 
 .nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
 .back-link { color:var(--primary); text-decoration:none; font-size:14px; cursor:pointer; }
@@ -187,44 +185,6 @@ body { font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; backgr
     <div class="footer" id="footer-result">Based on the Myers-Briggs Type Indicator (MBTI) framework.</div>
 </div>
 
-<!-- ═══════════ PDF TEMPLATE (hidden) ═══════════ -->
-<div id="pdf-content">
-    <style>
-        #pdf-content { font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; padding:30px; color:#2d3436; }
-        #pdf-content h1 { color:#2c5f8a; font-size:22px; margin-bottom:16px; text-align:center; }
-        #pdf-content .pdf-subtitle { text-align:center; color:#888; font-size:13px; margin-bottom:24px; }
-        #pdf-content .pdf-type { text-align:center; font-size:48px; font-weight:800; color:#2c5f8a; letter-spacing:6px; margin:16px 0; }
-        #pdf-content .pdf-typename { text-align:center; font-size:16px; color:#888; font-style:italic; margin-bottom:24px; }
-        #pdf-content h2 { color:#2c5f8a; font-size:15px; margin:18px 0 8px; border-bottom:1px solid #e0e6ed; padding-bottom:4px; }
-        #pdf-content p { font-size:12px; line-height:1.7; margin-bottom:10px; }
-        #pdf-content .pdf-bar-row { margin-bottom:12px; }
-        #pdf-content .pdf-bar-label { font-size:11px; font-weight:600; color:#636e72; margin-bottom:2px; }
-        #pdf-content .pdf-bar-box { display:flex; height:18px; border-radius:9px; overflow:hidden; }
-        #pdf-content .pdf-bar-left { display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff; background:#2c5f8a; }
-        #pdf-content .pdf-bar-right { display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff; background:#3ca4a4; }
-        #pdf-content .pdf-bar-desc { font-size:10px; color:#888; font-style:italic; margin-bottom:8px; }
-        #pdf-content ul { margin-bottom:12px; padding-left:16px; }
-        #pdf-content li { font-size:12px; padding:2px 0; line-height:1.5; }
-        #pdf-content .pdf-footer { margin-top:24px; font-size:10px; color:#bbb; text-align:center; font-style:italic; }
-    </style>
-    <h1 id="pdf-report-title"></h1>
-    <div class="pdf-subtitle" id="pdf-report-subtitle"></div>
-    <div class="pdf-type" id="pdf-type"></div>
-    <div class="pdf-typename" id="pdf-type-name"></div>
-    <h2 id="pdf-dim-heading"></h2>
-    <div id="pdf-dims"></div>
-    <h2 id="pdf-overview-heading">Overview</h2>
-    <p id="pdf-overview"></p>
-    <h2 id="pdf-traits-heading">Key Traits</h2>
-    <p id="pdf-traits"></p>
-    <h2 id="pdf-work-heading">Work Style & Career</h2>
-    <p id="pdf-work"></p>
-    <h2 id="pdf-strengths-heading">Strengths</h2>
-    <ul id="pdf-strengths"></ul>
-    <h2 id="pdf-weaknesses-heading">Areas for Growth</h2>
-    <ul id="pdf-weaknesses"></ul>
-    <div class="pdf-footer" id="pdf-footer"></div>
-</div>
 
 <script>
 // ═══════════════════════════════════════════
@@ -1054,7 +1014,7 @@ document.getElementById('test-form').addEventListener('submit', function(e) {
 });
 
 // ═══════════════════════════════════════════
-// PDF DOWNLOAD (html2pdf)
+// PDF DOWNLOAD (html2pdf — dynamic visible container)
 // ═══════════════════════════════════════════
 async function downloadPDF() {
     const mbtiType = document.getElementById('page-result').dataset.mbtiType;
@@ -1065,44 +1025,48 @@ async function downloadPDF() {
     btn.disabled = true;
 
     try {
-        // Fill PDF template
-        document.getElementById('pdf-report-title').textContent = t('pdfReportTitle');
-        document.getElementById('pdf-report-subtitle').textContent = t('pdfReportSub');
-        document.getElementById('pdf-type').textContent = mbtiType;
-        document.getElementById('pdf-type-name').textContent = (lang==='zh' ? '「' + p.title_zh + '」' : 'The ' + p.title_en);
-        document.getElementById('pdf-dim-heading').textContent = t('pdfDimHeading');
-
+        // Build dim bars HTML
         const dimOrder = [['EI','E','I'],['SN','S','N'],['TF','T','F'],['JP','J','P']];
         let dimHTML = '';
         dimOrder.forEach(([dim, a, b]) => {
             const pctA = scores[dim][a], pctB = scores[dim][b];
-            dimHTML += `<div class="pdf-bar-row">
-                <div class="pdf-bar-label">${t('dimDescs')[dim]}: ${a} ${pctA}% — ${pctB}% ${b}</div>
-                <div class="pdf-bar-box">
-                    <div class="pdf-bar-left" style="width:${pctA}%">${pctA>=12?a+' '+pctA+'%':''}</div>
-                    <div class="pdf-bar-right" style="width:${pctB}%">${pctB>=12?pctB+'% '+b:''}</div>
+            dimHTML += `<div style="margin-bottom:12px;">
+                <div style="font-size:11px;font-weight:600;color:#555;margin-bottom:2px;">${t('dimDescs')[dim]}: ${a} ${pctA}% — ${pctB}% ${b}</div>
+                <div style="display:flex;height:18px;border-radius:9px;overflow:hidden;">
+                    <div style="display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;background:#2c5f8a;width:${pctA}%;${pctA===0?'border-radius:0;':''}">${pctA>=12?a+' '+pctA+'%':''}</div>
+                    <div style="display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;background:#3ca4a4;width:${pctB}%;${pctB===0?'border-radius:0;':''}">${pctB>=12?pctB+'% '+b:''}</div>
                 </div>
-                <div class="pdf-bar-desc">${t('dimMeanings')[dim]}</div>
+                <div style="font-size:10px;color:#999;font-style:italic;margin-bottom:4px;">${t('dimMeanings')[dim]}</div>
             </div>`;
         });
-        document.getElementById('pdf-dims').innerHTML = dimHTML;
-
-        document.getElementById('pdf-overview-heading').textContent = t('pdfOverviewHeading');
-        document.getElementById('pdf-overview').textContent = lang==='zh'?p.overview_zh:p.overview_en;
-        document.getElementById('pdf-traits-heading').textContent = t('pdfTraitsHeading');
-        document.getElementById('pdf-traits').textContent = lang==='zh'?p.traits_zh:p.traits_en;
-        document.getElementById('pdf-work-heading').textContent = t('pdfWorkHeading');
-        document.getElementById('pdf-work').textContent = lang==='zh'?p.work_zh:p.work_en;
-        document.getElementById('pdf-strengths-heading').textContent = t('pdfStrengthsHeading');
-        document.getElementById('pdf-weaknesses-heading').textContent = t('pdfWeaknessesHeading');
 
         const strengths = (lang==='zh'?p.strengths_zh:p.strengths_en).split(',').map(s => { s=s.trim().replace(/\.$/,''); return s?'<li>'+s+'</li>':''; }).join('');
         const weaknesses = (lang==='zh'?p.weaknesses_zh:p.weaknesses_en).split(',').map(s => { s=s.trim().replace(/\.$/,''); return s?'<li>'+s+'</li>':''; }).join('');
-        document.getElementById('pdf-strengths').innerHTML = strengths;
-        document.getElementById('pdf-weaknesses').innerHTML = weaknesses;
-        document.getElementById('pdf-footer').textContent = t('pdfFooter');
 
-        const pdfEl = document.getElementById('pdf-content');
+        // Build temp visible container
+        const el = document.createElement('div');
+        el.id = '_pdf_tmp';
+        el.style.cssText = 'position:fixed;top:0;left:0;width:720px;z-index:99999;background:#fff;padding:30px;font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:#2d3436;';
+        el.innerHTML = `
+            <h1 style="color:#2c5f8a;font-size:22px;margin-bottom:16px;text-align:center;">${t('pdfReportTitle')}</h1>
+            <div style="text-align:center;color:#888;font-size:13px;margin-bottom:24px;">${t('pdfReportSub')}</div>
+            <div style="text-align:center;font-size:48px;font-weight:800;color:#2c5f8a;letter-spacing:6px;margin:16px 0;">${mbtiType}</div>
+            <div style="text-align:center;font-size:16px;color:#888;font-style:italic;margin-bottom:24px;">${lang==='zh' ? '「' + p.title_zh + '」' : 'The ' + p.title_en}</div>
+            <h2 style="color:#2c5f8a;font-size:15px;margin:18px 0 8px;border-bottom:1px solid #e0e6ed;padding-bottom:4px;">${t('pdfDimHeading')}</h2>
+            ${dimHTML}
+            <h2 style="color:#2c5f8a;font-size:15px;margin:18px 0 8px;border-bottom:1px solid #e0e6ed;padding-bottom:4px;">${t('pdfOverviewHeading')}</h2>
+            <p style="font-size:12px;line-height:1.7;margin-bottom:10px;">${lang==='zh'?p.overview_zh:p.overview_en}</p>
+            <h2 style="color:#2c5f8a;font-size:15px;margin:18px 0 8px;border-bottom:1px solid #e0e6ed;padding-bottom:4px;">${t('pdfTraitsHeading')}</h2>
+            <p style="font-size:12px;line-height:1.7;margin-bottom:10px;">${lang==='zh'?p.traits_zh:p.traits_en}</p>
+            <h2 style="color:#2c5f8a;font-size:15px;margin:18px 0 8px;border-bottom:1px solid #e0e6ed;padding-bottom:4px;">${t('pdfWorkHeading')}</h2>
+            <p style="font-size:12px;line-height:1.7;margin-bottom:10px;">${lang==='zh'?p.work_zh:p.work_en}</p>
+            <h2 style="color:#2c5f8a;font-size:15px;margin:18px 0 8px;border-bottom:1px solid #e0e6ed;padding-bottom:4px;">${t('pdfStrengthsHeading')}</h2>
+            <ul style="margin-bottom:12px;padding-left:16px;">${strengths}</ul>
+            <h2 style="color:#2c5f8a;font-size:15px;margin:18px 0 8px;border-bottom:1px solid #e0e6ed;padding-bottom:4px;">${t('pdfWeaknessesHeading')}</h2>
+            <ul style="margin-bottom:12px;padding-left:16px;">${weaknesses}</ul>
+            <div style="margin-top:24px;font-size:10px;color:#bbb;text-align:center;font-style:italic;">${t('pdfFooter')}</div>
+        `;
+        document.body.appendChild(el);
 
         await html2pdf().set({
             margin: [10, 10, 10, 10],
@@ -1110,12 +1074,15 @@ async function downloadPDF() {
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true, logging: false },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        }).from(pdfEl).save();
+        }).from(el).save();
 
+        document.body.removeChild(el);
         btn.textContent = t('btnDownload');
         btn.disabled = false;
     } catch (e) {
         console.error(e);
+        const tmp = document.getElementById('_pdf_tmp');
+        if (tmp) document.body.removeChild(tmp);
         btn.textContent = lang==='zh'?'下载失败 — 重试':'Download failed — retry';
         btn.disabled = false;
     }
