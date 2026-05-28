@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MBTI Personality Test</title>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
 <style>
 :root {
     --primary: #2c5f8a; --primary-light: #e8f0f8; --accent: #3ca4a4;
@@ -94,18 +95,6 @@ body { font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; backgr
 .nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
 .back-link { color:var(--primary); text-decoration:none; font-size:14px; cursor:pointer; }
 .back-link:hover { text-decoration:underline; }
-
-/* Print styles — clean report for Save as PDF */
-@media print {
-    body { background:#fff; }
-    .container { max-width:100%; padding:20px 30px; }
-    .nav, .progress-wrap, .actions, .footer, .disclaimer, #page-landing, #page-test { display:none !important; }
-    .header { padding:20px 0 10px; }
-    .card { box-shadow:none; border:1px solid #ddd; break-inside:avoid; margin-bottom:14px; }
-    .strength-weakness { break-inside:avoid; }
-    .dim-bar-left, .dim-bar-right { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .btn { display:none; }
-}
 
 @media (max-width:640px) {
     .container { padding:12px 14px 40px; }
@@ -219,7 +208,7 @@ en: {
     resultTypeLabel:"Your Personality Type",
     dimHeading:"Dimension Breakdown",
     btnRetake:"Take the Test Again",
-    btnDownload:"Save as PDF / Print",
+    btnDownload:"Download Word Report (.docx)",
     disclaimer:"This report is generated for informational and educational purposes. MBTI is a personality indicator, not a diagnostic tool. Personality is complex and cannot be fully captured by any single assessment.",
     footerResult:"Based on the Myers-Briggs Type Indicator (MBTI) framework.",
     pdfReportTitle:"MBTI Personality Report",
@@ -253,7 +242,7 @@ zh: {
     resultTypeLabel:"你的人格类型",
     dimHeading:"维度分析",
     btnRetake:"重新测试",
-    btnDownload:"保存为 PDF / 打印",
+    btnDownload:"下载 Word 报告 (.docx)",
     disclaimer:"本报告仅供信息参考和教育用途。MBTI 是一种人格指标，而非诊断工具。人格是复杂的，任何单一评估都无法完全涵盖。",
     footerResult:"基于 Myers-Briggs Type Indicator (MBTI) 框架。",
     pdfReportTitle:"MBTI 人格分析报告",
@@ -1027,8 +1016,103 @@ document.getElementById('test-form').addEventListener('submit', function(e) {
 // ═══════════════════════════════════════════
 // PDF DOWNLOAD (html2pdf — dynamic visible container)
 // ═══════════════════════════════════════════
-function downloadPDF() {
-    window.print();
+async function downloadPDF() {
+    const mbtiType = document.getElementById('page-result').dataset.mbtiType;
+    const scores = JSON.parse(document.getElementById('page-result').dataset.scores);
+    const p = PERSONALITY[mbtiType];
+    const btn = document.getElementById('btn-download');
+    btn.textContent = lang==='zh'?'生成中...':'Generating...';
+    btn.disabled = true;
+
+    try {
+        const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = docx;
+
+        const dimLabels = {
+            EI:{a:'E',b:'I',desc_en:'Extraversion vs Introversion',desc_zh:'外向 vs 内向',meaning_en:'Where you focus your attention and get energy',meaning_zh:'你关注注意力和获取能量的方向'},
+            SN:{a:'S',b:'N',desc_en:'Sensing vs Intuition',desc_zh:'实感 vs 直觉',meaning_en:'How you take in information and perceive the world',meaning_zh:'你如何接收和感知信息'},
+            TF:{a:'T',b:'F',desc_en:'Thinking vs Feeling',desc_zh:'思考 vs 情感',meaning_en:'How you make decisions and evaluate information',meaning_zh:'你如何做出决策和评估信息'},
+            JP:{a:'J',b:'P',desc_en:'Judging vs Perceiving',desc_zh:'判断 vs 感知',meaning_en:'How you approach structure and the outer world',meaning_zh:'你如何应对外部世界的结构和秩序'}
+        };
+
+        const children = [];
+        const zh = lang === 'zh';
+
+        children.push(new Paragraph({ spacing:{after:400}, alignment:AlignmentType.CENTER,
+            children:[new TextRun({text:t('pdfReportTitle'),bold:true,size:44,color:'003366'})] }));
+        children.push(new Paragraph({ spacing:{after:400}, alignment:AlignmentType.CENTER,
+            children:[new TextRun({text:t('pdfReportSub'),size:24,color:'888888',italics:true})] }));
+
+        children.push(new Paragraph({ heading:HeadingLevel.HEADING_1, spacing:{after:200},
+            children:[new TextRun({text:zh?'你的人格类型':'Your Personality Type'})] }));
+        children.push(new Paragraph({ spacing:{after:100}, alignment:AlignmentType.CENTER,
+            children:[new TextRun({text:mbtiType,bold:true,size:56,color:'003366'})] }));
+        children.push(new Paragraph({ spacing:{after:400}, alignment:AlignmentType.CENTER,
+            children:[new TextRun({text:zh?'「'+p.title_zh+'」':'The '+p.title_en,italics:true,size:28,color:'888888'})] }));
+
+        children.push(new Paragraph({ heading:HeadingLevel.HEADING_2, spacing:{before:300,after:200},
+            children:[new TextRun({text:zh?'维度分析':'Dimension Breakdown'})] }));
+
+        for (const [dim, lb] of Object.entries(dimLabels)) {
+            const pctA = scores[dim][lb.a], pctB = scores[dim][lb.b];
+            const barA = '█'.repeat(Math.round(pctA/4));
+            const barB = '█'.repeat(Math.round(pctB/4));
+            children.push(new Paragraph({ spacing:{before:200},
+                children:[new TextRun({text:zh?lb.desc_zh:lb.desc_en,bold:true,size:22})] }));
+            children.push(new Paragraph({
+                children:[new TextRun({text:lb.a+': '+barA+' '+pctA+'%    '+lb.b+': '+barB+' '+pctB+'%',size:20})] }));
+            children.push(new Paragraph({ spacing:{after:100},
+                children:[new TextRun({text:zh?lb.meaning_zh:lb.meaning_en,italics:true,size:18,color:'888888'})] }));
+        }
+
+        children.push(new Paragraph({ spacing:{before:300,after:300},
+            children:[new TextRun({text:'─'.repeat(60),color:'cccccc'})] }));
+
+        children.push(new Paragraph({ heading:HeadingLevel.HEADING_1, spacing:{after:200},
+            children:[new TextRun({text:zh?'人格评价':'Personality Evaluation'})] }));
+
+        for (const [label, key] of [[zh?'概述':'Overview','overview'],[zh?'核心特质':'Key Traits','traits'],[zh?'工作风格与职业':'Work Style & Career','work']]) {
+            children.push(new Paragraph({ heading:HeadingLevel.HEADING_2, spacing:{after:100},
+                children:[new TextRun({text:label})] }));
+            children.push(new Paragraph({ spacing:{after:200},
+                children:[new TextRun({text:zh?p[key+'_zh']:p[key+'_en'],size:22})] }));
+        }
+
+        children.push(new Paragraph({ heading:HeadingLevel.HEADING_2, spacing:{after:100},
+            children:[new TextRun({text:zh?'优势':'Strengths'})] }));
+        (zh?p.strengths_zh:p.strengths_en).split(',').forEach(s => {
+            s = s.trim().replace(/\.$/,'');
+            if (s) children.push(new Paragraph({ spacing:{after:60}, bullet:{level:0},
+                children:[new TextRun({text:s,size:21})] }));
+        });
+
+        children.push(new Paragraph({ heading:HeadingLevel.HEADING_2, spacing:{after:100,before:200},
+            children:[new TextRun({text:zh?'成长方向':'Areas for Growth'})] }));
+        (zh?p.weaknesses_zh:p.weaknesses_en).split(',').forEach(s => {
+            s = s.trim().replace(/\.$/,'');
+            if (s) children.push(new Paragraph({ spacing:{after:60}, bullet:{level:0},
+                children:[new TextRun({text:s,size:21})] }));
+        });
+
+        children.push(new Paragraph({ spacing:{before:500},
+            children:[new TextRun({text:t('pdfFooter'),size:16,color:'aaaaaa',italics:true})] }));
+
+        const doc = new Document({ sections:[{children}] });
+        const blob = await Packer.toBlob(doc);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'MBTI_Report_' + mbtiType + '.docx';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        btn.textContent = t('btnDownload');
+        btn.disabled = false;
+    } catch (e) {
+        console.error(e);
+        btn.textContent = lang==='zh'?'下载失败 — 重试':'Download failed — retry';
+        btn.disabled = false;
+    }
 }
 
 // ═══════════════════════════════════════════
