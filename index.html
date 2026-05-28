@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MBTI Personality Test</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
 <style>
 :root {
     --primary: #2c5f8a; --primary-light: #e8f0f8; --accent: #3ca4a4;
@@ -95,6 +94,18 @@ body { font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; backgr
 .nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
 .back-link { color:var(--primary); text-decoration:none; font-size:14px; cursor:pointer; }
 .back-link:hover { text-decoration:underline; }
+
+/* Print styles — clean report for Save as PDF */
+@media print {
+    body { background:#fff; }
+    .container { max-width:100%; padding:20px 30px; }
+    .nav, .progress-wrap, .actions, .footer, .disclaimer, #page-landing, #page-test { display:none !important; }
+    .header { padding:20px 0 10px; }
+    .card { box-shadow:none; border:1px solid #ddd; break-inside:avoid; margin-bottom:14px; }
+    .strength-weakness { break-inside:avoid; }
+    .dim-bar-left, .dim-bar-right { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .btn { display:none; }
+}
 
 @media (max-width:640px) {
     .container { padding:12px 14px 40px; }
@@ -208,7 +219,7 @@ en: {
     resultTypeLabel:"Your Personality Type",
     dimHeading:"Dimension Breakdown",
     btnRetake:"Take the Test Again",
-    btnDownload:"Download PDF Report",
+    btnDownload:"Save as PDF / Print",
     disclaimer:"This report is generated for informational and educational purposes. MBTI is a personality indicator, not a diagnostic tool. Personality is complex and cannot be fully captured by any single assessment.",
     footerResult:"Based on the Myers-Briggs Type Indicator (MBTI) framework.",
     pdfReportTitle:"MBTI Personality Report",
@@ -242,7 +253,7 @@ zh: {
     resultTypeLabel:"你的人格类型",
     dimHeading:"维度分析",
     btnRetake:"重新测试",
-    btnDownload:"下载 PDF 报告",
+    btnDownload:"保存为 PDF / 打印",
     disclaimer:"本报告仅供信息参考和教育用途。MBTI 是一种人格指标，而非诊断工具。人格是复杂的，任何单一评估都无法完全涵盖。",
     footerResult:"基于 Myers-Briggs Type Indicator (MBTI) 框架。",
     pdfReportTitle:"MBTI 人格分析报告",
@@ -1016,76 +1027,8 @@ document.getElementById('test-form').addEventListener('submit', function(e) {
 // ═══════════════════════════════════════════
 // PDF DOWNLOAD (html2pdf — dynamic visible container)
 // ═══════════════════════════════════════════
-async function downloadPDF() {
-    const mbtiType = document.getElementById('page-result').dataset.mbtiType;
-    const scores = JSON.parse(document.getElementById('page-result').dataset.scores);
-    const p = PERSONALITY[mbtiType];
-    const btn = document.getElementById('btn-download');
-    btn.textContent = lang==='zh'?'生成中...':'Generating...';
-    btn.disabled = true;
-
-    try {
-        // Build dim bars HTML
-        const dimOrder = [['EI','E','I'],['SN','S','N'],['TF','T','F'],['JP','J','P']];
-        let dimHTML = '';
-        dimOrder.forEach(([dim, a, b]) => {
-            const pctA = scores[dim][a], pctB = scores[dim][b];
-            dimHTML += `<div style="margin-bottom:12px;">
-                <div style="font-size:11px;font-weight:600;color:#555;margin-bottom:2px;">${t('dimDescs')[dim]}: ${a} ${pctA}% — ${pctB}% ${b}</div>
-                <div style="display:flex;height:18px;border-radius:9px;overflow:hidden;">
-                    <div style="display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;background:#2c5f8a;width:${pctA}%;${pctA===0?'border-radius:0;':''}">${pctA>=12?a+' '+pctA+'%':''}</div>
-                    <div style="display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;background:#3ca4a4;width:${pctB}%;${pctB===0?'border-radius:0;':''}">${pctB>=12?pctB+'% '+b:''}</div>
-                </div>
-                <div style="font-size:10px;color:#999;font-style:italic;margin-bottom:4px;">${t('dimMeanings')[dim]}</div>
-            </div>`;
-        });
-
-        const strengths = (lang==='zh'?p.strengths_zh:p.strengths_en).split(',').map(s => { s=s.trim().replace(/\.$/,''); return s?'<li>'+s+'</li>':''; }).join('');
-        const weaknesses = (lang==='zh'?p.weaknesses_zh:p.weaknesses_en).split(',').map(s => { s=s.trim().replace(/\.$/,''); return s?'<li>'+s+'</li>':''; }).join('');
-
-        // Build temp visible container
-        const el = document.createElement('div');
-        el.id = '_pdf_tmp';
-        el.style.cssText = 'position:fixed;top:0;left:0;width:720px;z-index:99999;background:#fff;padding:30px;font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:#2d3436;';
-        el.innerHTML = `
-            <h1 style="color:#2c5f8a;font-size:22px;margin-bottom:16px;text-align:center;">${t('pdfReportTitle')}</h1>
-            <div style="text-align:center;color:#888;font-size:13px;margin-bottom:24px;">${t('pdfReportSub')}</div>
-            <div style="text-align:center;font-size:48px;font-weight:800;color:#2c5f8a;letter-spacing:6px;margin:16px 0;">${mbtiType}</div>
-            <div style="text-align:center;font-size:16px;color:#888;font-style:italic;margin-bottom:24px;">${lang==='zh' ? '「' + p.title_zh + '」' : 'The ' + p.title_en}</div>
-            <h2 style="color:#2c5f8a;font-size:15px;margin:18px 0 8px;border-bottom:1px solid #e0e6ed;padding-bottom:4px;">${t('pdfDimHeading')}</h2>
-            ${dimHTML}
-            <h2 style="color:#2c5f8a;font-size:15px;margin:18px 0 8px;border-bottom:1px solid #e0e6ed;padding-bottom:4px;">${t('pdfOverviewHeading')}</h2>
-            <p style="font-size:12px;line-height:1.7;margin-bottom:10px;">${lang==='zh'?p.overview_zh:p.overview_en}</p>
-            <h2 style="color:#2c5f8a;font-size:15px;margin:18px 0 8px;border-bottom:1px solid #e0e6ed;padding-bottom:4px;">${t('pdfTraitsHeading')}</h2>
-            <p style="font-size:12px;line-height:1.7;margin-bottom:10px;">${lang==='zh'?p.traits_zh:p.traits_en}</p>
-            <h2 style="color:#2c5f8a;font-size:15px;margin:18px 0 8px;border-bottom:1px solid #e0e6ed;padding-bottom:4px;">${t('pdfWorkHeading')}</h2>
-            <p style="font-size:12px;line-height:1.7;margin-bottom:10px;">${lang==='zh'?p.work_zh:p.work_en}</p>
-            <h2 style="color:#2c5f8a;font-size:15px;margin:18px 0 8px;border-bottom:1px solid #e0e6ed;padding-bottom:4px;">${t('pdfStrengthsHeading')}</h2>
-            <ul style="margin-bottom:12px;padding-left:16px;">${strengths}</ul>
-            <h2 style="color:#2c5f8a;font-size:15px;margin:18px 0 8px;border-bottom:1px solid #e0e6ed;padding-bottom:4px;">${t('pdfWeaknessesHeading')}</h2>
-            <ul style="margin-bottom:12px;padding-left:16px;">${weaknesses}</ul>
-            <div style="margin-top:24px;font-size:10px;color:#bbb;text-align:center;font-style:italic;">${t('pdfFooter')}</div>
-        `;
-        document.body.appendChild(el);
-
-        await html2pdf().set({
-            margin: [10, 10, 10, 10],
-            filename: 'MBTI_Report_' + mbtiType + '.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, logging: false },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        }).from(el).save();
-
-        document.body.removeChild(el);
-        btn.textContent = t('btnDownload');
-        btn.disabled = false;
-    } catch (e) {
-        console.error(e);
-        const tmp = document.getElementById('_pdf_tmp');
-        if (tmp) document.body.removeChild(tmp);
-        btn.textContent = lang==='zh'?'下载失败 — 重试':'Download failed — retry';
-        btn.disabled = false;
-    }
+function downloadPDF() {
+    window.print();
 }
 
 // ═══════════════════════════════════════════
