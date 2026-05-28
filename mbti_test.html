@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MBTI Personality Test</title>
-<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
 <style>
 :root {
     --primary: #2c5f8a; --primary-light: #e8f0f8; --accent: #3ca4a4;
@@ -107,6 +108,15 @@ body { font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; backgr
     .strength-weakness { grid-template-columns:1fr; }
     .actions { flex-direction:column; align-items:center; }
 }
+
+@media print {
+    body { background: #fff; }
+    .container { max-width: 100%; padding: 0; }
+    .actions, .disclaimer, .footer, .nav, .btn, .back-link { display: none !important; }
+    .card { box-shadow: none; border: none; padding: 12px 0; page-break-inside: avoid; }
+    .result-header { padding: 16px 0; }
+    .type-display { font-size: 42px; letter-spacing: 4px; }
+}
 </style>
 </head>
 <body>
@@ -208,7 +218,7 @@ en: {
     resultTypeLabel:"Your Personality Type",
     dimHeading:"Dimension Breakdown",
     btnRetake:"Take the Test Again",
-    btnDownload:"Download Word Report (.docx)",
+    btnDownload:"Download PDF Report",
     disclaimer:"This report is generated for informational and educational purposes. MBTI is a personality indicator, not a diagnostic tool. Personality is complex and cannot be fully captured by any single assessment.",
     footerResult:"Based on the Myers-Briggs Type Indicator (MBTI) framework.",
     pdfReportTitle:"MBTI Personality Report",
@@ -242,7 +252,7 @@ zh: {
     resultTypeLabel:"你的人格类型",
     dimHeading:"维度分析",
     btnRetake:"重新测试",
-    btnDownload:"下载 Word 报告 (.docx)",
+    btnDownload:"下载 PDF 报告",
     disclaimer:"本报告仅供信息参考和教育用途。MBTI 是一种人格指标，而非诊断工具。人格是复杂的，任何单一评估都无法完全涵盖。",
     footerResult:"基于 Myers-Briggs Type Indicator (MBTI) 框架。",
     pdfReportTitle:"MBTI 人格分析报告",
@@ -1014,142 +1024,242 @@ document.getElementById('test-form').addEventListener('submit', function(e) {
 });
 
 // ═══════════════════════════════════════════
-// PDF DOWNLOAD (html2pdf — dynamic visible container)
+// DEV: Direct PDF test (same as pdf_test.html — hardcoded data)
 // ═══════════════════════════════════════════
-async function downloadPDF() {
-    const mbtiType = document.getElementById('page-result').dataset.mbtiType;
-    const scores = JSON.parse(document.getElementById('page-result').dataset.scores);
-    const p = PERSONALITY[mbtiType];
-    const btn = document.getElementById('btn-download');
-    btn.textContent = lang==='zh'?'生成中...':'Generating...';
-    btn.disabled = true;
-
-    try {
-        const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableRow, TableCell, WidthType } = docx;
-        const zh = lang === 'zh';
-        const BLUE = '2c5f8a', GRAY = '888888', ACCENT = '3ca4a4';
-
-        const dimLabels = {
-            EI:{a:'E',b:'I',desc_en:'Extraversion vs Introversion',desc_zh:'外向 (Extraversion)  vs  内向 (Introversion)',meaning_en:'Where you focus your attention and get energy',meaning_zh:'你关注注意力和获取能量的方向'},
-            SN:{a:'S',b:'N',desc_en:'Sensing vs Intuition',desc_zh:'实感 (Sensing)  vs  直觉 (Intuition)',meaning_en:'How you take in information and perceive the world',meaning_zh:'你如何接收和感知信息'},
-            TF:{a:'T',b:'F',desc_en:'Thinking vs Feeling',desc_zh:'思考 (Thinking)  vs  情感 (Feeling)',meaning_en:'How you make decisions and evaluate information',meaning_zh:'你如何做出决策和评估信息'},
-            JP:{a:'J',b:'P',desc_en:'Judging vs Perceiving',desc_zh:'判断 (Judging)  vs  感知 (Perceiving)',meaning_en:'How you approach structure and the outer world',meaning_zh:'你如何应对外部世界的结构和秩序'}
-        };
-
-        const children = [];
-        const PAGE_W = 9000;
-
-        // ═══ HEADER ═══
-        children.push(new Paragraph({ spacing:{after:80}, alignment:AlignmentType.CENTER,
-            children:[new TextRun({text:'━'.repeat(40),color:'d0d5dd',size:14})] }));
-        children.push(new Paragraph({ spacing:{after:60}, alignment:AlignmentType.CENTER,
-            children:[new TextRun({text:t('pdfReportTitle'),bold:true,size:52,color:BLUE})] }));
-        children.push(new Paragraph({ spacing:{after:0}, alignment:AlignmentType.CENTER,
-            children:[new TextRun({text:t('pdfReportSub'),size:24,color:GRAY,italics:true})] }));
-        children.push(new Paragraph({ spacing:{after:400},
-            children:[new TextRun({text:'━'.repeat(40),color:'d0d5dd',size:14})] }));
-
-        // ═══ TYPE RESULT ═══
-        children.push(new Paragraph({ heading:HeadingLevel.HEADING_1, spacing:{after:120},
-            children:[new TextRun({text:zh?'你的性格类型':'Your Personality Type',color:BLUE})] }));
-        children.push(new Paragraph({ spacing:{after:40}, alignment:AlignmentType.CENTER,
-            children:[new TextRun({text:mbtiType,bold:true,size:64,color:BLUE})] }));
-        children.push(new Paragraph({ spacing:{after:40}, alignment:AlignmentType.CENTER,
-            children:[new TextRun({text:'The ' + p.title_en,italics:true,size:28,color:GRAY})] }));
-        if (zh) children.push(new Paragraph({ spacing:{after:300}, alignment:AlignmentType.CENTER,
-            children:[new TextRun({text:'「' + p.title_zh + '」',size:24,color:GRAY})] }));
-        children.push(new Paragraph({ spacing:{after:200},
-            children:[new TextRun({text:'─'.repeat(60),color:'e0e6ed',size:10})] }));
-
-        // ═══ DIMENSION BREAKDOWN ═══
-        children.push(new Paragraph({ heading:HeadingLevel.HEADING_1, spacing:{before:200,after:120},
-            children:[new TextRun({text:zh?'维度分析':'Dimension Breakdown',color:BLUE})] }));
-
-        for (const [dim, lb] of Object.entries(dimLabels)) {
-            const pctA = scores[dim][lb.a], pctB = scores[dim][lb.b];
-            const barLen = 25;
-            const barA = Math.round(pctA / 4), barB = barLen - barA;
-            const barStrA = '█'.repeat(barA), barStrB = '█'.repeat(barB);
-
-            children.push(new Paragraph({ spacing:{before:160},
-                children:[new TextRun({text:zh?lb.desc_zh:lb.desc_en,bold:true,size:24,color:'333333'})] }));
-            children.push(new Paragraph({ spacing:{after:20},
-                children:[
-                    new TextRun({text:lb.a+'  ',bold:true,size:20,color:BLUE}),
-                    new TextRun({text:barStrA,size:18,color:BLUE}),
-                    new TextRun({text:'  '+pctA+'%',bold:true,size:20,color:BLUE}),
-                    new TextRun({text:'    '+lb.b+'  ',bold:true,size:20,color:ACCENT}),
-                    new TextRun({text:barStrB,size:18,color:ACCENT}),
-                    new TextRun({text:'  '+pctB+'%',bold:true,size:20,color:ACCENT}),
-                ] }));
-            children.push(new Paragraph({ spacing:{after:80},
-                children:[new TextRun({text:zh?lb.meaning_zh:lb.meaning_en,italics:true,size:18,color:GRAY})] }));
-        }
-
-        // ═══ DIVIDER ═══
-        children.push(new Paragraph({ spacing:{before:300,after:200},
-            children:[new TextRun({text:'─'.repeat(60),color:'e0e6ed',size:10})] }));
-
-        // ═══ EVALUATION ═══
-        children.push(new Paragraph({ heading:HeadingLevel.HEADING_1, spacing:{after:200},
-            children:[new TextRun({text:zh?'人格评价':'Personality Evaluation',color:BLUE})] }));
-
-        for (const [label, key] of [[zh?'概述':'Overview','overview'],[zh?'核心特质':'Key Traits','traits'],[zh?'工作风格与职业':'Work Style & Career','work']]) {
-            children.push(new Paragraph({ heading:HeadingLevel.HEADING_2, spacing:{before:200,after:80},
-                children:[new TextRun({text:label,color:BLUE})] }));
-            children.push(new Paragraph({ spacing:{after:160},
-                children:[new TextRun({text:zh?p[key+'_zh']:p[key+'_en'],size:21})] }));
-        }
-
-        // ═══ STRENGTHS & WEAKNESSES — simple two-column table ═══
-        const strengthsList = (zh?p.strengths_zh:p.strengths_en).split(',').map(s => s.trim().replace(/\.$/,'')).filter(Boolean);
-        const weaknessesList = (zh?p.weaknesses_zh:p.weaknesses_en).split(',').map(s => s.trim().replace(/\.$/,'')).filter(Boolean);
-        const maxRows = Math.max(strengthsList.length, weaknessesList.length);
-        const swTable = new Table({ rows: maxRows + 1, width:{size:100,type:WidthType.PERCENTAGE}, columnWidths:[4500,4500] });
-
-        // Header row
-        [[zh?'优势':'Strengths', BLUE],[zh?'成长方向':'Areas for Growth', ACCENT]].forEach(([hdr,clr], ci) => {
-            const c = swTable.getCell(0, ci);
-            c.addChildElement(new Paragraph({ spacing:{before:80,after:80}, alignment:AlignmentType.CENTER,
-                children:[new TextRun({text:hdr,bold:true,size:20,color:'ffffff'})] }));
-        });
-        // Content rows
-        for (let i = 0; i < maxRows; i++) {
-            [strengthsList, weaknessesList].forEach((list, ci) => {
-                const c = swTable.getCell(i + 1, ci);
-                if (list[i]) {
-                    c.addChildElement(new Paragraph({ spacing:{before:70,after:70},
-                        children:[new TextRun({text:'  ' + list[i],size:19})] }));
-                } else {
-                    c.addChildElement(new Paragraph({ spacing:{before:70,after:70}, children:[] }));
-                }
-            });
-        }
-        children.push(swTable);
-
-        // ═══ FOOTER ═══
-        children.push(new Paragraph({ spacing:{before:600,after:0},
-            children:[new TextRun({text:'━'.repeat(40),color:'d0d5dd',size:14})] }));
-        children.push(new Paragraph({ spacing:{before:200}, alignment:AlignmentType.CENTER,
-            children:[new TextRun({text:t('pdfFooter'),size:16,color:'bbbbbb',italics:true})] }));
-        children.push(new Paragraph({ spacing:{after:0}, alignment:AlignmentType.CENTER,
-            children:[new TextRun({text:new Date().toISOString().slice(0,10),size:14,color:'cccccc'})] }));
-
-        const doc = new Document({ sections:[{ children }] });
-        const blob = await Packer.toBlob(doc);
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
+// Helper: manual download via blob
+function _pdfDownload(docDef, filename, callback) {
+    pdfMake.createPdf(docDef).getBlob(function(blob) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
         a.href = url;
-        a.download = 'MBTI_Report_' + mbtiType + '.docx';
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        btn.textContent = t('btnDownload');
-        btn.disabled = false;
+        setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+        if (callback) callback();
+    });
+}
+
+function devTestPDF() {
+    var BLUE = '#2c5f8a', ACCENT = '#3ca4a4', GRAY = '#888888';
+    var scores = { EI: { E: 71, I: 29 }, SN: { S: 33, N: 67 }, TF: { T: 83, F: 17 }, JP: { J: 67, P: 33 } };
+
+    function makeBar(pctA, pctB, labelA, labelB) {
+        return {
+            table: {
+                widths: [pctA + '%', pctB + '%'],
+                body: [[
+                    { text: (pctA >= 15 ? labelA + ' ' + pctA + '%' : ' '), fillColor: BLUE, color: '#fff', fontSize: 9, bold: true, alignment: 'center', margin: [0, 4, 0, 4] },
+                    { text: (pctB >= 15 ? pctB + '% ' + labelB : ' '), fillColor: ACCENT, color: '#fff', fontSize: 9, bold: true, alignment: 'center', margin: [0, 4, 0, 4] }
+                ]]
+            },
+            layout: 'noBorders',
+            margin: [0, 3, 0, 3]
+        };
+    }
+
+    var content = [];
+
+    // Header
+    content.push({ text: 'MBTI Personality Report', fontSize: 18, bold: true, color: BLUE, alignment: 'center', margin: [0, 0, 0, 2] });
+    content.push({ text: 'Myers-Briggs Type Indicator — Personal Assessment', fontSize: 9, italics: true, color: GRAY, alignment: 'center', margin: [0, 0, 0, 12] });
+
+    // Type
+    content.push({ text: 'INTJ', fontSize: 34, bold: true, color: BLUE, alignment: 'center', margin: [0, 0, 0, 0] });
+    content.push({ text: 'The Architect', fontSize: 13, italics: true, color: GRAY, alignment: 'center', margin: [0, 0, 0, 10] });
+
+    // Dimension breakdown
+    content.push({ text: 'Dimension Breakdown', fontSize: 12, bold: true, color: BLUE, margin: [0, 8, 0, 4] });
+    var dims = [
+        ['EI', 'E', 'I', 'Extraversion vs Introversion', 'Where you focus your attention and get energy'],
+        ['SN', 'S', 'N', 'Sensing vs Intuition', 'How you take in information and perceive the world'],
+        ['TF', 'T', 'F', 'Thinking vs Feeling', 'How you make decisions and evaluate information'],
+        ['JP', 'J', 'P', 'Judging vs Perceiving', 'How you approach structure and the outer world']
+    ];
+    dims.forEach(function(d) {
+        var dim = d[0], a = d[1], b = d[2], label = d[3], meaning = d[4];
+        var pctA = scores[dim][a], pctB = scores[dim][b];
+        content.push({ text: label, bold: true, fontSize: 9.5, margin: [0, 4, 0, 1] });
+        content.push(makeBar(pctA, pctB, a, b));
+        content.push({ text: meaning, fontSize: 7.5, italics: true, color: GRAY, margin: [0, 0, 0, 6] });
+    });
+
+    // Evaluation
+    var sections = [
+        ['Overview', 'Strategic, analytical, and independent. INTJs are natural planners who see the world as a complex system to be understood and improved.'],
+        ['Key Traits', 'Rational, decisive, visionary, and highly self-disciplined. INTJs trust logic over emotion and prefer to work independently.'],
+        ['Work Style & Career', 'Systematic and strategic. INTJs excel at creating long-term plans and executing them with precision.']
+    ];
+    sections.forEach(function(s) {
+        content.push({ text: s[0], fontSize: 12, bold: true, color: BLUE, margin: [0, 8, 0, 3] });
+        content.push({ text: s[1], fontSize: 9.5, margin: [0, 0, 0, 6] });
+    });
+
+    // Strengths & Weaknesses
+    content.push({ text: 'Strengths & Areas for Growth', fontSize: 12, bold: true, color: BLUE, margin: [0, 8, 0, 3] });
+    var swBody = [
+        [{ text: 'Strengths', bold: true, fontSize: 9.5, color: '#fff', fillColor: BLUE, alignment: 'center', margin: [0, 3, 0, 3] },
+         { text: 'Areas for Growth', bold: true, fontSize: 9.5, color: '#fff', fillColor: ACCENT, alignment: 'center', margin: [0, 3, 0, 3] }]
+    ];
+    var strengths = ['Exceptional strategic thinking', 'Strong analytical ability', 'Unwavering determination', 'Independent and self-motivated', 'Able to see the big picture'];
+    var weaknesses = ['May come across as aloof', 'Can be overly critical', 'Struggles with social small talk', 'May overlook emotional needs'];
+    for (var i = 0; i < Math.max(strengths.length, weaknesses.length); i++) {
+        swBody.push([
+            { text: strengths[i] || '', fontSize: 8.5, margin: [5, 2, 5, 2] },
+            { text: weaknesses[i] || '', fontSize: 8.5, margin: [5, 2, 5, 2] }
+        ]);
+    }
+    content.push({ table: { widths: ['*', '*'], body: swBody }, layout: 'noBorders', margin: [0, 0, 0, 6] });
+
+    // Footer
+    content.push({ text: 'This report is for informational purposes only.', fontSize: 7, italics: true, color: '#bbbbbb', alignment: 'center', margin: [0, 10, 0, 0] });
+
+    var docDef = { pageSize: 'A4', pageMargins: [40, 32, 40, 30], content: content };
+    _pdfDownload(docDef, 'MBTI_Report_INTJ.pdf');
+}
+
+// ═══════════════════════════════════════════
+// DEV: Skip to result page with pre-filled data
+// ═══════════════════════════════════════════
+function devSkipToResult() {
+    const mbtiType = 'INTJ';
+    const scores = { EI: { E: 71, I: 29 }, SN: { S: 33, N: 67 }, TF: { T: 83, F: 17 }, JP: { J: 67, P: 33 } };
+    const p = PERSONALITY[mbtiType];
+
+    document.getElementById('result-type').textContent = mbtiType;
+    document.getElementById('result-title').textContent = 'The ' + p.title_en;
+    document.getElementById('result-type-label').textContent = 'Your Personality Type';
+    document.getElementById('dim-heading').textContent = 'Dimension Breakdown';
+
+    const dimOrder = [['EI','E','I'],['SN','S','N'],['TF','T','F'],['JP','J','P']];
+    let barsHTML = '';
+    dimOrder.forEach(([dim, a, b]) => {
+        const pctA = scores[dim][a], pctB = scores[dim][b];
+        barsHTML += `
+        <div class="dim-item">
+            <div class="dim-label"><span>${dim}</span><span>${a} ${pctA}% — ${pctB}% ${b}</span></div>
+            <div class="dim-bar-wrap">
+                <div class="dim-bar-left" style="width:${pctA}%;">${pctA>=15?a+' '+pctA+'%':''}</div>
+                <div class="dim-bar-right" style="width:${pctB}%;">${pctB>=15?pctB+'% '+b:''}</div>
+            </div>
+            <div class="dim-desc"></div>
+        </div>`;
+    });
+    document.getElementById('dim-bars').innerHTML = barsHTML;
+    document.getElementById('result-overview').innerHTML = '<h3>Overview</h3><p>' + p.overview_en + '</p>';
+    document.getElementById('result-traits').innerHTML = '<h3>Key Traits</h3><p>' + p.traits_en + '</p>';
+    document.getElementById('result-work').innerHTML = '<h3>Work Style & Career</h3><p>' + p.work_en + '</p>';
+
+    const strengths = p.strengths_en.split(',').map(s => s.trim().replace(/\.$/,'')).filter(Boolean).map(s => '<li>' + s + '</li>').join('');
+    const weaknesses = p.weaknesses_en.split(',').map(s => s.trim().replace(/\.$/,'')).filter(Boolean).map(s => '<li>' + s + '</li>').join('');
+    document.getElementById('result-sw').innerHTML = `
+        <div class="sw-card strengths"><h4>Strengths</h4><ul>${strengths}</ul></div>
+        <div class="sw-card weaknesses"><h4>Areas for Growth</h4><ul>${weaknesses}</ul></div>`;
+
+    document.getElementById('btn-retake').textContent = 'Take the Test Again';
+    document.getElementById('btn-download').textContent = 'Download PDF Report';
+    document.getElementById('result-disclaimer').textContent = 'This report is generated for informational and educational purposes.';
+
+    document.getElementById('page-result').dataset.mbtiType = mbtiType;
+    document.getElementById('page-result').dataset.scores = JSON.stringify(scores);
+
+    showPage('page-result');
+}
+
+// ═══════════════════════════════════════════
+// PDF DOWNLOAD — simple table-based bars, no Unicode chars, no custom layouts
+// ═══════════════════════════════════════════
+function downloadPDF() {
+    var btn = document.getElementById('btn-download');
+    var zh = lang === 'zh';
+    btn.textContent = zh ? '生成中...' : 'Generating...';
+    btn.disabled = true;
+
+    try {
+        var mbtiType = document.getElementById('page-result').dataset.mbtiType;
+        var scores = JSON.parse(document.getElementById('page-result').dataset.scores);
+        var p = PERSONALITY[mbtiType];
+        var BLUE = '#2c5f8a', ACCENT = '#3ca4a4', GRAY = '#888888';
+
+        function makeBar(pctA, pctB, labelA, labelB) {
+            return {
+                table: {
+                    widths: [pctA + '%', pctB + '%'],
+                    body: [[
+                        { text: (pctA >= 15 ? labelA + ' ' + pctA + '%' : ' '), fillColor: BLUE, color: '#fff', fontSize: 9, bold: true, alignment: 'center', margin: [0, 4, 0, 4] },
+                        { text: (pctB >= 15 ? pctB + '% ' + labelB : ' '), fillColor: ACCENT, color: '#fff', fontSize: 9, bold: true, alignment: 'center', margin: [0, 4, 0, 4] }
+                    ]]
+                },
+                layout: 'noBorders',
+                margin: [0, 3, 0, 3]
+            };
+        }
+
+        var content = [];
+
+        // Header
+        content.push({ text: t('pdfReportTitle'), fontSize: 18, bold: true, color: BLUE, alignment: 'center', margin: [0, 0, 0, 2] });
+        content.push({ text: t('pdfReportSub'), fontSize: 9, italics: true, color: GRAY, alignment: 'center', margin: [0, 0, 0, 12] });
+
+        // Type
+        content.push({ text: mbtiType, fontSize: 34, bold: true, color: BLUE, alignment: 'center', margin: [0, 0, 0, 0] });
+        content.push({ text: (zh ? '「' + p.title_zh + '」' : 'The ' + p.title_en), fontSize: 13, italics: true, color: GRAY, alignment: 'center', margin: [0, 0, 0, 10] });
+
+        // Dimension breakdown
+        content.push({ text: (zh ? '维度分析' : 'Dimension Breakdown'), fontSize: 12, bold: true, color: BLUE, margin: [0, 8, 0, 4] });
+        var dims = [
+            ['EI', 'E', 'I', zh ? '外向 vs 内向' : 'Extraversion vs Introversion', zh ? '注意力与能量来源' : 'Where you focus your attention and get energy'],
+            ['SN', 'S', 'N', zh ? '实感 vs 直觉' : 'Sensing vs Intuition', zh ? '信息接收方式' : 'How you take in information and perceive the world'],
+            ['TF', 'T', 'F', zh ? '思考 vs 情感' : 'Thinking vs Feeling', zh ? '决策与评估方式' : 'How you make decisions and evaluate information'],
+            ['JP', 'J', 'P', zh ? '判断 vs 感知' : 'Judging vs Perceiving', zh ? '应对外部世界的方式' : 'How you approach structure and the outer world']
+        ];
+        dims.forEach(function(d) {
+            var dim = d[0], a = d[1], b = d[2], label = d[3], meaning = d[4];
+            var pctA = scores[dim][a], pctB = scores[dim][b];
+            content.push({ text: label, bold: true, fontSize: 9.5, margin: [0, 4, 0, 1] });
+            content.push(makeBar(pctA, pctB, a, b));
+            content.push({ text: meaning, fontSize: 7.5, italics: true, color: GRAY, margin: [0, 0, 0, 6] });
+        });
+
+        // Evaluation
+        var sections = [
+            [zh ? '概述' : 'Overview', zh ? p.overview_zh : p.overview_en],
+            [zh ? '核心特质' : 'Key Traits', zh ? p.traits_zh : p.traits_en],
+            [zh ? '工作风格与职业' : 'Work Style & Career', zh ? p.work_zh : p.work_en]
+        ];
+        sections.forEach(function(s) {
+            content.push({ text: s[0], fontSize: 12, bold: true, color: BLUE, margin: [0, 8, 0, 3] });
+            content.push({ text: s[1], fontSize: 9.5, margin: [0, 0, 0, 6] });
+        });
+
+        // Strengths & Weaknesses
+        content.push({ text: (zh ? '优势与成长方向' : 'Strengths & Areas for Growth'), fontSize: 12, bold: true, color: BLUE, margin: [0, 8, 0, 3] });
+        var strengths = (zh ? p.strengths_zh : p.strengths_en).split(',').map(function(s) { return s.trim().replace(/\.$/, ''); }).filter(Boolean);
+        var weaknesses = (zh ? p.weaknesses_zh : p.weaknesses_en).split(',').map(function(s) { return s.trim().replace(/\.$/, ''); }).filter(Boolean);
+        var swBody = [[
+            { text: (zh ? '优势' : 'Strengths'), bold: true, fontSize: 9.5, color: '#fff', fillColor: BLUE, alignment: 'center', margin: [0, 3, 0, 3] },
+            { text: (zh ? '成长方向' : 'Areas for Growth'), bold: true, fontSize: 9.5, color: '#fff', fillColor: ACCENT, alignment: 'center', margin: [0, 3, 0, 3] }
+        ]];
+        for (var i = 0; i < Math.max(strengths.length, weaknesses.length); i++) {
+            swBody.push([
+                { text: strengths[i] || '', fontSize: 8.5, margin: [5, 2, 5, 2] },
+                { text: weaknesses[i] || '', fontSize: 8.5, margin: [5, 2, 5, 2] }
+            ]);
+        }
+        content.push({ table: { widths: ['*', '*'], body: swBody }, layout: 'noBorders', margin: [0, 0, 0, 6] });
+
+        // Footer
+        content.push({ text: t('disclaimer'), fontSize: 7, italics: true, color: '#bbbbbb', alignment: 'center', margin: [0, 10, 0, 0] });
+
+        var docDef = { pageSize: 'A4', pageMargins: [40, 32, 40, 30], content: content };
+        _pdfDownload(docDef, 'MBTI_Report_' + mbtiType + '.pdf', function() {
+            btn.textContent = t('btnDownload');
+            btn.disabled = false;
+        });
     } catch (e) {
         console.error(e);
-        btn.textContent = lang==='zh'?'下载失败 — 重试':'Download failed — retry';
+        btn.textContent = t('btnDownload');
         btn.disabled = false;
     }
 }
